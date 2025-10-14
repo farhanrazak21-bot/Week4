@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Year 2 — Plants in Different Habitats (Clue Fix)</title>
+<style>
+  :root{--bg:#f7fff7;--card:#ffffff;--muted:#6b7280;--accent:#063f3a;--brand:#0ea5a3}
+  *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial}
+  body{margin:0;background:linear-gradient(180deg,#f8fffb,#eefbf9);color:var(--accent)}
+  header{padding:14px 18px;display:flex;gap:12px;align-items:center}
+  h1{margin:0;font-size:18px}
+  .container{max-width:1100px;margin:12px auto;padding:14px}
+  .panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(6,63,58,0.06);margin-bottom:12px}
+  .days{display:flex;gap:8px;flex-wrap:wrap}
+  .day-btn{padding:8px 12px;border-radius:10px;border:1px solid transparent;background:#e8fdf7;cursor:pointer}
+  .day-btn.active{background:var(--brand);color:white}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+  .card{background:#fff;border-radius:8px;padding:10px;text-align:center;cursor:pointer;border:1px solid #e6f7f6}
+  .card img{max-width:100%;height:80px;object-fit:cover;border-radius:6px}
+  .small{font-size:13px;color:var(--muted)}
+  .controls{display:flex;gap:8px;align-items:center}
+  .result{margin-top:8px;padding:8px;border-radius:8px}
+  .correct{background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46}
+  .wrong{background:#fff1f2;border:1px solid #fecaca;color:#7f1d1d}
+  canvas{border-radius:8px;background:#fff;border:1px solid #e6f7f6}
+  .highlight{outline:3px solid rgba(14,165,163,0.16)}
+  .passport{display:flex;gap:8px;flex-wrap:wrap}
+  .stamp{padding:6px 8px;border-radius:6px;background:#e6fffb;border:1px solid #c7f0ea}
+  input[type=text], textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #d1eae6}
+  button.btn{padding:8px 12px;border-radius:8px;border:0;background:var(--brand);color:white;cursor:pointer}
+  @media (max-width:900px){header, .container{padding:10px}}
+  #clueReveal{margin-top:8px;padding:10px;border-radius:8px;background:#fffefc;border:1px solid #f0e9d8}
+</style>
+</head>
+<body>
+<header>
+  <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0ea5a3,#0284c7);display:flex;align-items:center;justify-content:center;color:white;font-weight:700">Y2</div>
+  <div>
+    <h1>Year 2 — Plants in Different Habitats</h1>
+    <div class="small">Five lesson-days: Habitats matching, silhouette guessing, survival traits, passport activity, spin wheel & outdoor observation.</div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="panel">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div>
+        <div class="small">Begin each lesson with a short dua and an Islamic reflection about the wonders of Allah's creation (ISIC5).</div>
+        <strong>Use the activities below for independent or group tasks.</strong>
+      </div>
+      <div style="margin-left:auto" class="controls">
+        <label class="small">Mode: <select id="mode"><option>Group</option><option>Independent</option></select></label>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </div>
+    <div style="margin-top:12px" class="days">
+      <button class="day-btn active" data-day="1">Mon — Habitats & Plants</button>
+      <button class="day-btn" data-day="2">Wed — Silhouettes & Traits</button>
+      <button class="day-btn" data-day="3">Thu — Passport Adventure</button>
+      <button class="day-btn" data-day="4">Fri — Spin Wheel & Observe</button>
+    </div>
+  </section>
+
+  <section id="dayContent" class="panel"></section>
+
+  <section class="panel">
+    <h3>Teacher notes & plenary</h3>
+    <ul class="small">
+      <li>Use pictures and real plants where possible. Provide support to less-able students with labeled cards.</li>
+      <li>More able: research extra plants that live in each habitat and present adaptation reasons.</li>
+      <li>Plenary suggestions: short reflection on Allah's wisdom in creating diverse habitats.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const $ = (s,ctx=document)=>ctx.querySelector(s);
+const $$ = (s,ctx=document)=>Array.from((ctx||document).querySelectorAll(s));
+const dayContent = $('#dayContent');
+let state = {day:1};
+
+const HABITATS = [
+  {id:'rainforest',name:'Rainforest',plants:['Fern','Banana tree','Pitcher plant'],img:''},
+  {id:'mangroves',name:'Mangroves',plants:['Mangrove tree (Rhizophora)','Nipa palm'],img:''},
+  {id:'grassland',name:'Grassland',plants:['Grass','Wildflower'],img:''},
+  {id:'desert',name:'Desert',plants:['Cactus','Date palm','Aloe vera'],img:''},
+  {id:'pond',name:'Pond',plants:['Lotus','Water lily'],img:''}
+];
+
+function createDay1(){
+  return `
+  <div>
+    <h3 class="small">Lesson focus: Plants in different habitats</h3>
+    <p class="small">Drag each plant card into the habitat where it lives.</p>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:280px">
+        <div class="small">Plant cards</div>
+        <div id="plantBank" class="grid" style="margin-top:8px"></div>
+      </div>
+
+      <div style="flex:2;min-width:320px">
+        <div class="small">Habitats</div>
+        <div id="habitatsArea" style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <button id="checkMatch" class="btn">Check Matches</button>
+      <button id="shuffle" class="btn ghost">Shuffle Cards</button>
+      <div id="matchFB" style="margin-left:12px"></div>
+    </div>
+  </div>`;
+}
+
+function createDay2(){
+  return `
+  <div>
+    <h3 class="small">Starter: Guess the plant silhouette</h3>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <canvas id="silCanvas" width="360" height="200"></canvas>
+      <div style="flex:1">
+        <div class="small">Type your guess:</div>
+        <input id="silGuess" type="text" placeholder="e.g., Cactus">
+        <div style="margin-top:8px"><button id="checkSil" class="btn">Check</button> <span id="silFB"></span></div>
+
+        <hr style="margin:10px 0">
+        <h4 class="small">Plant traits</h4>
+        <p class="small">Match the trait to the plant (drag trait to plant).</p>
+        <div id="traitBank" class="grid" style="margin-top:8px"></div>
+        <div id="plantDrop2" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div style="margin-top:8px"><button id="checkTraits" class="btn">Check Traits</button> <span id="traitFB"></span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function createDay3(){
+  return `
+  <div>
+    <h3 class="small">Passport Adventure — paste habitat picture, write one plant & animal.</h3>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:280px">
+        <div class="small">Clue cards (click to reveal)</div>
+        <div id="clueArea" style="margin-top:8px"></div>
+        <div id="clueReveal" class="small">Click a clue button to reveal the clue here.</div>
+      </div>
+      <div style="flex:1;min-width:320px">
+        <div class="small">Your Passport</div>
+        <div class="passport" id="passportArea" style="margin-top:8px"></div>
+        <div style="margin-top:8px">
+          <label>Paste habitat name: <input id="passHab" type="text"></label>
+          <label>Plant: <input id="passPlant" type="text"></label>
+          <label>Animal: <input id="passAnimal" type="text"></label>
+          <div style="margin-top:8px"><button id="stampPass" class="btn">Check & Stamp</button> <span id="stampFB"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function createDay4(){
+  return `
+  <div>
+    <h3 class="small">Spin Wheel: name a plant and where it lives. Then do a short observation outdoors.</h3>
+    <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+      <div style="min-width:320px">
+        <canvas id="wheel" width="320" height="320"></canvas>
+        <div style="margin-top:8px"><button id="spin" class="btn">Spin Wheel</button> <button id="stopSpin" class="btn ghost">Stop</button></div>
+        <div id="spinFB" style="margin-top:8px"></div>
+      </div>
+
+      <div style="flex:1;min-width:320px">
+        <div class="small">Observation Recorder</div>
+        <label>Where did you look? <input id="obsWhere" type="text"></label>
+        <label>Plant observed: <input id="obsPlant" type="text"></label>
+        <label>One thing you noticed: <textarea id="obsNote" rows="3"></textarea></label>
+        <div style="margin-top:8px"><button id="saveObs" class="btn">Save Observation</button> <span id="obsFB"></span></div>
+        <div id="obsList" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function render(){
+  if(state.day===1) dayContent.innerHTML = createDay1();
+  if(state.day===2) dayContent.innerHTML = createDay2();
+  if(state.day===3) dayContent.innerHTML = createDay3();
+  if(state.day===4) dayContent.innerHTML = createDay4();
+  attachHandlers();
+}
+
+function attachHandlers(){
+  $$('.day-btn').forEach(b=>b.addEventListener('click', ()=>{ $$('.day-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); state.day=Number(b.dataset.day); render(); }));
+  $('#reset').addEventListener('click', ()=>{ render(); });
+
+  if(state.day===1){
+    const bank = $('#plantBank'); bank.innerHTML = '';
+    const habitatsArea = $('#habitatsArea'); habitatsArea.innerHTML='';
+    const plantCards = [];
+    HABITATS.forEach(h=>{ h.plants.forEach(p=> plantCards.push({plant:p,hab:h.id})); });
+    for(let i=plantCards.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [plantCards[i],plantCards[j]]=[plantCards[j],plantCards[i]]; }
+    plantCards.forEach(pc=>{ const d=document.createElement('div'); d.className='card'; d.draggable=true; d.textContent=pc.plant; d.dataset.hab=pc.hab; bank.appendChild(d); d.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', pc.plant+'||'+pc.hab); }); });
+
+    HABITATS.forEach(h=>{ const el=document.createElement('div'); el.className='card'; el.style.minWidth='160px'; el.style.flex='1'; el.dataset.hab=h.id; el.innerHTML=`<strong>${h.name}</strong><div class="small">Drop plants here</div><div class="dropArea" style="margin-top:8px;min-height:40px"></div>`; habitatsArea.appendChild(el);
+      el.addEventListener('dragover', e=>e.preventDefault());
+      el.addEventListener('drop', e=>{ e.preventDefault(); const data=e.dataTransfer.getData('text/plain'); const [plant,hab]=data.split('||'); const drop = el.querySelector('.dropArea'); const p=document.createElement('div'); p.className='card'; p.style.marginTop='6px'; p.textContent=plant; p.dataset.hab=hab; drop.appendChild(p); });
+    });
+
+    $('#checkMatch').addEventListener('click', ()=>{
+      const drops = Array.from($$('.dropArea')).flatMap(d=>Array.from(d.children));
+      let correct=0; let total=0; drops.forEach(ch=>{ total++; const parentHab = ch.closest('.card').dataset.hab; if(ch.dataset.hab===parentHab) correct++; });
+      $('#matchFB').innerHTML = `<div class="result ${correct===total? 'correct':'wrong'}">${correct} of ${total} matches correct.</div>`;
+    });
+    $('#shuffle').addEventListener('click', ()=>{ render(); });
+  }
+
+  if(state.day===2){
+    const canvas = $('#silCanvas'); const ctx = canvas.getContext('2d'); const silhouettes = {
+      Cactus: ctx=>{ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#e6ffe8'; ctx.strokeStyle='#0a6b5a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(80,160); ctx.bezierCurveTo(60,110,80,80,120,80); ctx.bezierCurveTo(140,60,160,60,180,80); ctx.bezierCurveTo(210,80,220,100,220,140); ctx.lineTo(220,180); ctx.lineTo(80,180); ctx.closePath(); ctx.fill(); ctx.stroke(); },
+      Lotus: ctx=>{ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff7e6'; ctx.strokeStyle='#5a7a3a'; ctx.beginPath(); ctx.ellipse(180,120,80,40,0,0,Math.PI*2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(100,120); ctx.quadraticCurveTo(180,20,260,120); ctx.stroke(); },
+      Fern: ctx=>{ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#f0fff4'; ctx.strokeStyle='#2b6f3a'; ctx.beginPath(); for(let i=0;i<8;i++){ ctx.ellipse(180-40+i*8,80+i*12,30,8,Math.PI/6,0,Math.PI*2); } ctx.fill(); ctx.stroke(); }
+    };
+    const keys = Object.keys(silhouettes); const pick = keys[Math.floor(Math.random()*keys.length)]; silhouettes[pick](ctx); canvas.dataset.answer=pick;
+    $('#checkSil').addEventListener('click', ()=>{ const g = $('#silGuess').value.trim(); const ans = canvas.dataset.answer; if(g.toLowerCase()===ans.toLowerCase()){ $('#silFB').innerHTML='<span class="result correct">Correct! It is '+ans+'</span>'; } else { $('#silFB').innerHTML='<span class="result wrong">Try again — hint: starts with '+ans[0]+'</span>'; } });
+
+    const traits = [ {plant:'Cactus',trait:'Thick stem to store water'}, {plant:'Lotus',trait:'Wide leaves that float'}, {plant:'Fern',trait:'Big leaves to catch sunlight'}, {plant:'Mangrove tree',trait:'Strong roots for saltwater'} ];
+    const bank = $('#traitBank'); bank.innerHTML=''; const plantDrop = $('#plantDrop2'); plantDrop.innerHTML=''; traits.forEach(t=>{ const d=document.createElement('div'); d.className='card'; d.draggable=true; d.textContent=t.trait; d.dataset.plant=t.plant; bank.appendChild(d); d.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', t.plant+'||'+t.trait); }); });
+    const plants = Array.from(new Set(traits.map(t=>t.plant)));
+    plants.forEach(p=>{ const el=document.createElement('div'); el.className='card'; el.style.minWidth='140px'; el.innerHTML=`<strong>${p}</strong><div class="dropArea" style="margin-top:6px;min-height:30px"></div>`; plantDrop.appendChild(el); el.addEventListener('dragover', e=>e.preventDefault()); el.addEventListener('drop', e=>{ e.preventDefault(); const data=e.dataTransfer.getData('text/plain'); const [plant,trait]=data.split('||'); const drop = el.querySelector('.dropArea'); const d=document.createElement('div'); d.className='small'; d.textContent=trait; drop.appendChild(d); }); });
+    $('#checkTraits').addEventListener('click', ()=>{
+      let total=0, correct=0; Array.from($('#plantDrop2').querySelectorAll('.card')).forEach(card=>{ const plantName = card.querySelector('strong').textContent; const got = Array.from(card.querySelectorAll('.dropArea div')).map(x=>x.textContent); const expected = traits.filter(t=>t.plant===plantName).map(t=>t.trait); total+=expected.length; expected.forEach(e=>{ if(got.includes(e)) correct++; }); }); $('#traitFB').innerHTML = `<div class="result ${correct===total?'correct':'wrong'}">${correct} of ${total} traits matched.</div>`;
+    });
+  }
+
+  if(state.day===3){
+    const clues = [ {text:'This habitat is often hot and plants store water.',hab:'desert'},{text:'You can find wide floating leaves and ponds.',hab:'pond'},{text:'Tall leafy trees, lots of rain and ferns.',hab:'rainforest'},{text:'Roots that can live in salty water.',hab:'mangroves'},{text:'Open land with grasses and wildflowers.',hab:'grassland'} ];
+    const area = $('#clueArea'); area.innerHTML=''; clues.forEach((c,i)=>{ const b=document.createElement('button'); b.className='btn'; b.style.background='#fff'; b.style.color='var(--accent)'; b.style.border='1px solid #d1eae6'; b.style.marginBottom='6px'; b.textContent = 'Clue '+(i+1); // reveal in-page instead of alert
+      b.addEventListener('click', ()=>{ $('#clueReveal').textContent = `Clue ${i+1}: ${c.text}`; }); area.appendChild(b); });
+    const passport = $('#passportArea'); passport.innerHTML = '<div class="card" style="min-width:200px;padding:10px"><strong>Passport</strong><div class="small">Paste habitat picture here</div></div>';
+    $('#stampPass').addEventListener('click', ()=>{ const hab = $('#passHab').value.trim(); const plant = $('#passPlant').value.trim(); const animal = $('#passAnimal').value.trim(); if(!hab || !plant || !animal){ $('#stampFB').innerHTML='<span class="result wrong">Fill all fields</span>'; return; } const stamp = document.createElement('div'); stamp.className='stamp'; stamp.textContent = `Pass: ${hab}`; passport.appendChild(stamp); $('#stampFB').innerHTML='<span class="result correct">Stamped! Well done.</span>'; });
+  }
+
+  if(state.day===4){
+    const wheel = $('#wheel'); const ctx = wheel.getContext('2d'); const items = HABITATS.map(h=>h.name);
+    function drawWheel(angle=0){ const cx=160, cy=160, r=150; const len = items.length; ctx.clearRect(0,0,320,320); for(let i=0;i<len;i++){ const start = (i/len)*Math.PI*2 + angle; const end = ((i+1)/len)*Math.PI*2 + angle; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,end); ctx.closePath(); ctx.fillStyle = i%2? '#e9fff8':'#f0fff9'; ctx.fill(); ctx.strokeStyle='#cfeee6'; ctx.stroke(); ctx.save(); ctx.translate(cx,cy); ctx.rotate((start+end)/2); ctx.fillStyle='#064b45'; ctx.textAlign='center'; ctx.fillText(items[i], r-60, 0); ctx.restore(); }
+      ctx.fillStyle='#064b45'; ctx.beginPath(); ctx.moveTo(cx,cy-r-10); ctx.lineTo(cx-10,cy-r+20); ctx.lineTo(cx+10,cy-r+20); ctx.closePath(); ctx.fill(); }
+    drawWheel(0);
+
+    let spinning = false; let ang = 0; let velocity = 0; let animId = null;
+    function startSpin(){ if(spinning) return; spinning = true; velocity = Math.random()*0.6 + 0.6; function frame(){ ang += velocity; drawWheel(ang); velocity *= 0.985; if(velocity > 0.002){ animId = requestAnimationFrame(frame); } else { spinning = false; velocity = 0; const twoPI = Math.PI*2; const len = items.length; const adjusted = ((-Math.PI/2 - ang) % twoPI + twoPI) % twoPI; const idx = Math.floor((adjusted / twoPI) * len) % len; $('#spinFB').innerHTML = `<div class="result correct">Spin result: <strong>${items[idx]}</strong></div>`; cancelAnimationFrame(animId); animId = null; } } animId = requestAnimationFrame(frame); }
+    function stopSpin(){ if(!spinning) return; velocity *= 0.05; }
+
+    $('#spin').addEventListener('click', ()=>{ startSpin(); });
+    $('#stopSpin').addEventListener('click', ()=>{ stopSpin(); });
+
+    $('#saveObs').addEventListener('click', ()=>{ const where = $('#obsWhere').value.trim(); const plant = $('#obsPlant').value.trim(); const note = $('#obsNote').value.trim(); if(!where||!plant||!note){ $('#obsFB').innerHTML = '<span class="result wrong">Please fill all fields</span>'; return; } const list = $('#obsList'); const el = document.createElement('div'); el.className='card'; el.style.marginTop='6px'; el.innerHTML = `<strong>${plant}</strong> at ${where}<div class="small">Note: ${note}</div>`; list.appendChild(el); $('#obsFB').innerHTML = '<span class="result correct">Observation saved — share with class.</span>'; $('#obsWhere').value=''; $('#obsPlant').value=''; $('#obsNote').value=''; });
+  }
+}
+
+render();
+</script>
+</body>
+</html>

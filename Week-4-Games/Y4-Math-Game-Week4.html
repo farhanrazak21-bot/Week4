@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Year 4 — Factors & Divisibility Interactive</title>
+  <style>
+    :root{--bg:#f4f7fb;--card:#ffffff;--muted:#6b7280;--accent:#0f172a;--brand:#0ea5a3}
+    *{box-sizing:border-box;font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+    body{margin:0;background:linear-gradient(180deg,#f8fafc 0%, #eef2ff 100%);color:var(--accent)}
+    header{padding:20px 24px;display:flex;align-items:center;gap:16px}
+    h1{font-size:20px;margin:0}
+    .container{max-width:1100px;margin:12px auto;padding:16px}
+    .panel{background:var(--card);border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,0.06);padding:18px;margin-bottom:16px}
+    .days{display:flex;gap:8px;flex-wrap:wrap}
+    .day-btn{padding:8px 12px;border-radius:10px;border:1px solid transparent;cursor:pointer;background:#e6f7f6}
+    .day-btn.active{background:var(--brand);color:white}
+    .toprow{display:flex;gap:16px;align-items:center;margin-bottom:12px}
+    .controls{margin-left:auto;display:flex;gap:8px}
+    label small{display:block;color:var(--muted)}
+    .game-area{display:grid;grid-template-columns:1fr;gap:12px}
+    .grid2{display:grid;grid-template-columns:1fr 380px;gap:12px}
+    .question-list{display:flex;flex-direction:column;gap:8px}
+    .number-card{background:#fbfdfe;border-radius:10px;padding:14px;text-align:center;font-weight:700;font-size:28px}
+    .factors-wrap{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:8px 12px;border-radius:999px;background:#f1f5f9;border:1px solid #e2e8f0;cursor:pointer}
+    .chip.selected{background:var(--brand);color:white;border-color:transparent}
+    .small{font-size:13px;color:var(--muted)}
+    .result{padding:10px;border-radius:8px}
+    .correct{background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46}
+    .wrong{background:#fff1f2;border:1px solid #fecaca;color:#7f1d1d}
+    footer{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
+    input[type=number]{width:100%;padding:8px;border-radius:8px;border:1px solid #d1d5db}
+    .btn{padding:8px 12px;border-radius:10px;border:0;cursor:pointer}
+    .btn.primary{background:var(--brand);color:white}
+    .btn.ghost{background:transparent;border:1px solid #c7d2fe}
+    @media (max-width:900px){.grid2{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0ea5a3,#0284c7);display:flex;align-items:center;justify-content:center;color:white;font-weight:700">Y4</div>
+    <div>
+      <h1>Factors & Divisibility — Interactive Games (Year 4)</h1>
+      <div class="small">Four lesson-days: Factors, Relationship, Divisibility (2,5,10), Advanced Divisibility (25,50,100)</div>
+    </div>
+  </header>
+  <main class="container">
+    <section class="panel">
+      <div class="toprow">
+        <div>
+          <div class="small">Start each lesson with:</div>
+          <strong>Dua for knowledge and guidance</strong>
+        </div>
+        <div class="controls">
+          <label style="display:flex;align-items:center;gap:8px"><input id="difficulty" type="range" min="20" max="100" step="1" value="50"> <small class="small">Max number: <span id="maxNum">50</span></small></label>
+          <button id="resetAll" class="btn ghost">Reset</button>
+        </div>
+      </div>
+      <div class="days" role="tablist" aria-label="Lesson Days">
+        <button class="day-btn active" data-day="1">Day 1 — Factors</button>
+        <button class="day-btn" data-day="2">Day 2 — Relationship</button>
+        <button class="day-btn" data-day="3">Day 3 — Divisible 2/5/10</button>
+        <button class="day-btn" data-day="4">Day 4 — 25/50/100</button>
+      </div>
+    </section>
+
+    <section id="dayContent" class="panel game-area">
+      <!-- Content loaded by JS -->
+    </section>
+
+    <section class="panel">
+      <h3>Teacher notes & reflection prompts</h3>
+      <ul>
+        <li class="small">Use manipulatives (counters, cubes) for Day 1 and Day 2 when possible.</li>
+        <li class="small">Extend Day 1 by identifying numbers ≤50 with more than 4 factors.</li>
+        <li class="small">Relate activities to muraqabah — reflect on strategies students used.</li>
+        <li class="small">Eco connection: show patterns in nature and relate to number patterns.</li>
+      </ul>
+    </section>
+
+    <footer class="small">Made for classroom use — edit questions freely. Save the file and open in a browser to run offline.</footer>
+  </main>
+
+  <script>
+    // Utility
+    const $ = (sel, ctx=document)=>ctx.querySelector(sel);
+    const $$ = (sel, ctx=document)=>Array.from(ctx.querySelectorAll(sel));
+
+    const state = {day:1, maxNum:50};
+    const dayContent = $('#dayContent');
+
+    function createDay1(){
+      return `
+      <div>
+        <div class="grid2">
+          <div>
+            <div class="number-card">Factor Forest — Find factor pairs</div>
+            <div style="margin-top:12px">
+              <div class="small">Pick a number or randomise. Students list all factor pairs then choose the correct factor tiles.</div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <input id="numInput" type="number" min="1" max="${state.maxNum}" value="12">
+                <button id="setNum" class="btn primary">Set</button>
+                <button id="randNum" class="btn">Random</button>
+              </div>
+            </div>
+
+            <div style="margin-top:12px">
+              <strong>Factor tiles (choose all that apply)</strong>
+              <div id="tiles" class="factors-wrap" style="margin-top:8px"></div>
+            </div>
+
+            <div style="margin-top:12px">
+              <button id="checkFactors" class="btn primary">Check Answers</button>
+              <div id="factorFeedback" style="margin-top:8px"></div>
+            </div>
+
+            <hr style="margin:14px 0">
+
+            <div>
+              <strong>Independent task (Workbook style)</strong>
+              <div class="question-list" style="margin-top:8px">
+                <label>List all factors of <strong>6</strong>: <input data-answer="1,2,3,6" class="work-input" type="text" placeholder="comma separated"></label>
+                <label>First five multiples of <strong>8</strong>: <input data-answer="8,16,24,32,40" class="work-input" type="text"></label>
+                <label>Find factor pairs for <strong>12</strong>: <input data-answer="1x12,2x6,3x4" class="work-input" type="text"></label>
+                <button id="checkWorkbook" class="btn">Check Workbook</button>
+                <div id="workFeedback" style="margin-top:8px"></div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="panel" style="min-height:320px">
+            <h3>Group game — Factor Finder</h3>
+            <div class="small">Teacher presses <em>New Challenge</em>. Teams race to identify all factors of the shown number. Use manipulatives to show arrays.</div>
+            <div style="margin-top:12px;text-align:center">
+              <div class="number-card" id="challengeNum">12</div>
+              <div style="margin-top:8px"><button id="newChallenge" class="btn primary">New Challenge</button></div>
+              <div style="margin-top:10px" id="challengeFactors"></div>
+            </div>
+
+            <hr>
+            <div>
+              <h4>Reflection</h4>
+              <p class="small">Ask students: How did you find all the factors? Which number had the most factors? Link to muraqabah: what strategy did you watch yourself using?</p>
+            </div>
+          </aside>
+        </div>
+      </div>`;
+    }
+
+    function createDay2(){
+      return `
+      <div>
+        <div class="grid2">
+          <div>
+            <div class="number-card">Relationship — Factors & Multiples</div>
+            <div style="margin-top:12px"><div class="small">Enter two numbers to find common factors & common multiples (first 8).</div></div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input id="aNum" type="number" value="12"> <input id="bNum" type="number" value="18"> <button id="findLink" class="btn primary">Find Link</button>
+            </div>
+            <div style="margin-top:12px">
+              <strong>Common factors:</strong>
+              <div id="commonFactors" class="factors-wrap" style="margin-top:8px"></div>
+            </div>
+            <div style="margin-top:12px">
+              <strong>Common multiples (first 8):</strong>
+              <div id="commonMultiples" class="factors-wrap" style="margin-top:8px"></div>
+            </div>
+
+            <hr style="margin:14px 0">
+            <div>
+              <h4>Independent task</h4>
+              <label>Numbers both factor & multiple of each other? (e.g., 6 and 12) <input id="q2input" placeholder="enter answer like 'no' or 'yes and why'"/></label>
+              <div style="margin-top:8px"><button id="checkQ2" class="btn">Check</button><div id="q2fb" style="margin-top:8px"></div></div>
+            </div>
+          </div>
+
+          <aside class="panel" style="min-height:320px">
+            <h3>Class activity — Number Web</h3>
+            <div class="small">Use string to connect numbers that share factors/multiples. Or use the interactive below to visualise.</div>
+            <div style="margin-top:12px">
+              <canvas id="webCanvas" width="340" height="260" style="border-radius:8px;background:#fbfdfe"></canvas>
+              <div style="margin-top:8px"><button id="drawWeb" class="btn primary">Draw Example Web (12 & 18)</button></div>
+            </div>
+
+            <hr>
+            <div>
+              <h4>Reflection</h4>
+              <p class="small">Relate to food webs and muraqabah: how numbers depend on others; how we check connections.</p>
+            </div>
+          </aside>
+        </div>
+      </div>`;
+    }
+
+    function createDay3(){
+      return `
+      <div>
+        <div class="grid2">
+          <div>
+            <div class="number-card">Divisibility Detective (2, 5, 10)</div>
+            <div style="margin-top:8px" class="small">Press <em>New Number</em>. Students test the number by rules and explain why it's divisible or not.</div>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+              <div class="number-card" id="divNum" style="font-size:32px">80</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <button id="newDiv" class="btn primary">New Number</button>
+                <button id="explainBtn" class="btn">Show Rule Explanation</button>
+              </div>
+            </div>
+
+            <div style="margin-top:12px">
+              <div><label><input type="checkbox" id="chk2"> Divisible by 2</label></div>
+              <div><label><input type="checkbox" id="chk5"> Divisible by 5</label></div>
+              <div><label><input type="checkbox" id="chk10"> Divisible by 10</label></div>
+              <div style="margin-top:8px"><button id="checkDivs" class="btn primary">Check</button></div>
+              <div id="divFeedback" style="margin-top:8px"></div>
+            </div>
+
+            <hr style="margin:14px 0">
+            <div>
+              <h4>Group Game — Divisibility Detective</h4>
+              <p class="small">Teams take turns testing numbers. Ask: Which rules combine to show divisibility by 20, 50, 100?</p>
+            </div>
+          </div>
+
+          <aside class="panel" style="min-height:320px">
+            <h3>Workbook Task</h3>
+            <div class="small">Decide divisibility for each number.</div>
+            <ol style="margin-top:8px">
+              <li>46 → <select data-ans="2"><option value="">Choose</option><option>2</option><option>5</option><option>10</option><option>none</option></select></li>
+              <li>125 → <select data-ans="5"><option value="">Choose</option><option>2</option><option>5</option><option>10</option><option>none</option></select></li>
+              <li>80 → <select data-ans="10"><option value="">Choose</option><option>2</option><option>5</option><option>10</option><option>none</option></select></li>
+            </ol>
+            <div style="margin-top:8px"><button id="checkWB3" class="btn">Check Workbook</button><div id="wb3fb" style="margin-top:8px"></div></div>
+          </aside>
+        </div>
+      </div>`;
+    }
+
+    function createDay4(){
+      return `
+      <div>
+        <div class="grid2">
+          <div>
+            <div class="number-card">Advanced Divisibility — 25, 50, 100</div>
+            <div class="small" style="margin-top:8px">Teacher demonstrates rules, then students create 4-digit numbers following two rules.</div>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <input id="advNum" type="number" value="2500"> <button id="setAdv" class="btn primary">Set</button> <button id="randAdv" class="btn">Random</button>
+            </div>
+
+            <div style="margin-top:12px">
+              <label><input type="checkbox" id="chk25"> Divisible by 25</label><br>
+              <label><input type="checkbox" id="chk50"> Divisible by 50</label><br>
+              <label><input type="checkbox" id="chk100"> Divisible by 100</label>
+              <div style="margin-top:8px"><button id="checkAdv" class="btn primary">Check</button></div>
+              <div id="advFB" style="margin-top:8px"></div>
+            </div>
+
+            <hr style="margin:14px 0">
+            <div>
+              <h4>Group Challenge</h4>
+              <p class="small">Create 4-digit numbers that satisfy two rules (e.g., divisible by 50 and 5). Teams show examples.</p>
+            </div>
+          </div>
+
+          <aside class="panel" style="min-height:320px">
+            <h3>Quick Reference — Rules</h3>
+            <ul class="small">
+              <li>Divisible by 25 → last two digits: 00, 25, 50, 75</li>
+              <li>Divisible by 50 → last two digits: 00 or 50</li>
+              <li>Divisible by 100 → last two digits: 00</li>
+            </ul>
+            <div style="margin-top:12px"><button id="showExamples" class="btn">Show examples</button><div id="advExamples" style="margin-top:8px"></div></div>
+          </aside>
+        </div>
+      </div>`;
+    }
+
+    // Render day
+    function render(){
+      if(state.day===1) dayContent.innerHTML = createDay1();
+      if(state.day===2) dayContent.innerHTML = createDay2();
+      if(state.day===3) dayContent.innerHTML = createDay3();
+      if(state.day===4) dayContent.innerHTML = createDay4();
+      attachHandlers();
+    }
+
+    // Attach DOM handlers for interactive parts
+    function attachHandlers(){
+      // Common handlers
+      $$('.day-btn').forEach(b=>b.addEventListener('click', ()=>{
+        $$('.day-btn').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        state.day = Number(b.dataset.day);
+        render();
+      }));
+
+      $('#difficulty').addEventListener('input', e=>{ state.maxNum = Number(e.target.value); $('#maxNum').textContent = state.maxNum; });
+      $('#resetAll').addEventListener('click', ()=>{ state.maxNum=50; $('#difficulty').value=50; $('#maxNum').textContent=50; render(); });
+
+      if(state.day===1){
+        const tiles = $('#tiles');
+        function drawTiles(n){ tiles.innerHTML='';
+          for(let i=1;i<=state.maxNum;i++){
+            const el = document.createElement('button'); el.className='chip'; el.textContent=i; el.dataset.val = i;
+            el.addEventListener('click', ()=> el.classList.toggle('selected'));
+            tiles.appendChild(el);
+          }
+        }
+        drawTiles(state.maxNum);
+
+        $('#setNum').addEventListener('click', ()=>{ const v=Number($('#numInput').value); $('#numInput').value = Math.max(1, Math.min(state.maxNum,v)); $('.number-card').textContent = v; });
+        $('#randNum').addEventListener('click', ()=>{ const v = Math.floor(Math.random()*state.maxNum)+1; $('#numInput').value=v; $('.number-card').textContent=v; });
+
+        $('#checkFactors').addEventListener('click', ()=>{
+          const n = Number($('#numInput').value);
+          const selected = $$('.chip.selected').map(c=>Number(c.dataset.val));
+          const real = [];
+          for(let i=1;i<=n;i++) if(n%i===0) real.push(i);
+          const missed = real.filter(x=>!selected.includes(x));
+          const wrong = selected.filter(x=>!real.includes(x));
+          const fb = $('#factorFeedback'); fb.innerHTML='';
+          if(missed.length===0 && wrong.length===0){ fb.innerHTML = '<div class="result correct">Perfect! All factors found.</div>'; }
+          else{ fb.innerHTML = `<div class="result wrong"><strong>Missing:</strong> ${missed.join(', ') || 'none'}<br><strong>Wrong picks:</strong> ${wrong.join(', ') || 'none'}</div>`; }
+        });
+
+        $('#newChallenge').addEventListener('click', ()=>{
+          const n = Math.floor(Math.random()*state.maxNum)+1; $('#challengeNum').textContent=n;
+          const factors=[]; for(let i=1;i<=n;i++) if(n%i===0) factors.push(i);
+          $('#challengeFactors').textContent = 'Factors: ' + factors.join(', ');
+        });
+
+        $('#checkWorkbook').addEventListener('click', ()=>{
+          const inputs = $$('.work-input'); let ok=true; let msgs=[];
+          inputs.forEach(inp=>{ const expected = inp.dataset.answer.split(',').map(s=>s.trim().toLowerCase()); const given = inp.value.split(',').map(s=>s.trim().toLowerCase()); const match = expected.every(e=>given.includes(e)); if(!match) ok=false; msgs.push(match?'<div class="small">✔</div>':'<div class="small">✖</div>'); });
+          $('#workFeedback').innerHTML = ok?'<div class="result correct">Workbook looks good — great work.</div>':'<div class="result wrong">Some answers need review.</div>';
+        });
+      }
+
+      if(state.day===2){
+        $('#findLink').addEventListener('click', ()=>{
+          const a=Number($('#aNum').value), b=Number($('#bNum').value);
+          const af=[], bf=[]; for(let i=1;i<=Math.max(a,b);i++){ if(a%i===0) af.push(i); if(b%i===0) bf.push(i); }
+          const commonF = af.filter(x=>bf.includes(x));
+          $('#commonFactors').innerHTML = commonF.map(n=>`<div class="chip selected">${n}</div>`).join('') || '<span class="small">None</span>';
+
+          // common multiples (first 8)
+          const cms=[]; let k=1; while(cms.length<8){ const m = k*Math.max(a,b); if(m%a===0 && m%b===0) cms.push(m); k++; if(k>200) break; }
+          $('#commonMultiples').innerHTML = cms.map(n=>`<div class="chip">${n}</div>`).join('') || '<span class="small">None within range</span>';
+        });
+
+        $('#drawWeb').addEventListener('click', ()=>{
+          const canvas = $('#webCanvas'); const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height);
+          const nodes = [{x:60,y:50,label:12},{x:280,y:50,label:18},{x:170,y:180,label:6}];
+          ctx.lineWidth=2; ctx.strokeStyle='#c7d2fe'; ctx.fillStyle='#eef2ff';
+          // draw links
+          ctx.beginPath(); ctx.moveTo(nodes[0].x,nodes[0].y); ctx.lineTo(nodes[2].x,nodes[2].y); ctx.lineTo(nodes[1].x,nodes[1].y); ctx.stroke();
+          nodes.forEach(n=>{ ctx.fillStyle='#fff'; ctx.strokeStyle='#cbd5e1'; ctx.fillRect(n.x-30,n.y-20,60,40); ctx.strokeRect(n.x-30,n.y-20,60,40); ctx.fillStyle='#0f172a'; ctx.fillText(n.label,n.x-6,n.y+6); });
+        });
+
+        $('#checkQ2').addEventListener('click', ()=>{ const ans = $('#q2input').value.trim().toLowerCase(); $('#q2fb').textContent = ans? 'Answer recorded — discuss as class.': 'Please write your reasoning.'; });
+      }
+
+      if(state.day===3){
+        function setDivNum(n){ $('#divNum').textContent = n; }
+        $('#newDiv').addEventListener('click', ()=>{ const n=Math.floor(Math.random()*state.maxNum)+1; setDivNum(n); });
+        $('#explainBtn').addEventListener('click', ()=>{
+          const n = Number($('#divNum').textContent); alert(`Rules:\n- By 2: last digit even (0,2,4,6,8)\n- By 5: last digit 0 or 5\n- By 10: last digit 0\nExample: ${n}`);
+        });
+        $('#checkDivs').addEventListener('click', ()=>{
+          const n = Number($('#divNum').textContent);
+          const r2 = n%2===0; const r5 = n%5===0; const r10 = n%10===0;
+          const s2 = $('#chk2').checked, s5 = $('#chk5').checked, s10 = $('#chk10').checked;
+          let msgs=[]; if(r2===s2) msgs.push('2 ✓'); else msgs.push('2 ✖'); if(r5===s5) msgs.push('5 ✓'); else msgs.push('5 ✖'); if(r10===s10) msgs.push('10 ✓'); else msgs.push('10 ✖');
+          $('#divFeedback').innerHTML = `<div class="result ${msgs.every(m=>m.includes('✓'))?'correct':'wrong'}">${msgs.join(' — ')}</div>`;
+        });
+
+        $('#checkWB3').addEventListener('click', ()=>{
+          const selects = $$('aside select'); let ok=true; selects.forEach(s=>{ if(s.value==='' || s.value!==s.dataset.ans) ok=false; }); $('#wb3fb').innerHTML = ok?'<div class="result correct">All correct</div>':'<div class="result wrong">Some answers need review</div>';
+        });
+      }
+
+      if(state.day===4){
+        function checkAdvRules(n){ return {r25: [0,25,50,75].includes(n%100), r50: [0,50].includes(n%100), r100: n%100===0 }; }
+        $('#setAdv').addEventListener('click', ()=>{ $('#advFB').textContent=''; $('#advNum').value = Math.max(0, Number($('#advNum').value)); });
+        $('#randAdv').addEventListener('click', ()=>{ $('#advNum').value = (Math.floor(Math.random()*9000)+1000); });
+        $('#checkAdv').addEventListener('click', ()=>{
+          const n = Number($('#advNum').value); const res = checkAdvRules(n);
+          const s25 = $('#chk25').checked, s50 = $('#chk50').checked, s100 = $('#chk100').checked;
+          let ok = (res.r25===s25) && (res.r50===s50) && (res.r100===s100);
+          $('#advFB').innerHTML = ok?'<div class="result correct">Nice — rules applied correctly.</div>':`<div class="result wrong">Correct: 25:${res.r25}, 50:${res.r50}, 100:${res.r100}</div>`;
+        });
+
+        $('#showExamples').addEventListener('click', ()=>{
+          $('#advExamples').innerHTML = '<div class="small">Examples: 2500 (25,50,100), 2575 (25), 5050 (25,50), 3400 (25,100)</div>';
+        });
+      }
+    }
+
+    // init
+    render();
+  </script>
+</body>
+</html>

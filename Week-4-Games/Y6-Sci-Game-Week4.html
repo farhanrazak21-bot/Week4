@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Year 6 Science — Diseases, Defences & Hygiene (Interactive)</title>
+<style>
+  :root{--bg:#fbfdff;--card:#fff;--muted:#556;--accent:#0b486b;--brand:#0ea5a3}
+  *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial}
+  body{margin:0;background:linear-gradient(180deg,#f7fcfb,#eef9ff);color:var(--accent)}
+  header{display:flex;gap:12px;align-items:center;padding:14px}
+  h1{margin:0;font-size:18px}
+  .container{max-width:1100px;margin:12px auto;padding:12px}
+  .panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 20px rgba(8,64,80,0.06);margin-bottom:12px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border-radius:8px;background:#eafdfb;cursor:pointer;border:1px solid rgba(6,72,80,0.06)}
+  .tab.active{background:var(--brand);color:white}
+  .row{display:flex;gap:12px;align-items:flex-start}
+  .col{flex:1}
+  .card{background:#fff;border-radius:10px;padding:12px;border:1px solid #e6f7f6}
+  .small{font-size:13px;color:var(--muted)}
+  button{padding:8px 10px;border-radius:8px;border:0;background:var(--brand);color:white;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid #cfeeea;color:var(--accent)}
+  .list{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{padding:8px 10px;border-radius:8px;background:#f6fffd;border:1px solid #d6f7f2}
+  .cardItem{padding:10px;border-radius:8px;background:#fff;border:1px solid #eef7f6;min-width:140px;text-align:center;cursor:pointer}
+  .cardItem.revealed{box-shadow:0 6px 14px rgba(14,165,163,0.08)}
+  .dropzone{min-height:60px;padding:8px;border-radius:8px;border:2px dashed #d6f7f2;background:#fbfffe}
+  .result{margin-top:8px;padding:8px;border-radius:8px}
+  .correct{background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46}
+  .wrong{background:#fff1f2;border:1px solid #fecaca;color:#7f1d1d}
+  input,select,textarea{padding:6px;border-radius:6px;border:1px solid #dbeeea}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  td,th{border:1px solid #eef7f6;padding:6px;text-align:left}
+  @media (max-width:900px){.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+  <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0ea5a3,#0284c7);display:flex;align-items:center;justify-content:center;color:white;font-weight:800">Y6</div>
+  <div>
+    <h1>Year 6 Science — Microbes, Defences & Hygiene</h1>
+    <div class="small">Four lesson-days with interactive activities: Microorganisms, Body Defences, Hygiene & Transmission, Quiz & Review.</div>
+  </div>
+</header>
+<main class="container">
+  <section class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="small">All buttons clickable; event delegation used. No alerts — in-page feedback. Tested for common DOM update bugs.</div>
+      <div>
+        <label class="small">Mode: <select id="mode"><option>Group</option><option>Independent</option></select></label>
+        <button id="resetAll" class="ghost">Reset</button>
+      </div>
+    </div>
+    <div style="margin-top:12px" class="tabs">
+      <div class="tab active" data-day="1">Day 1 — Microbes (Types & Examples)</div>
+      <div class="tab" data-day="2">Day 2 — Body Defences</div>
+      <div class="tab" data-day="3">Day 3 — Hygiene & Transmission</div>
+      <div class="tab" data-day="4">Day 4 — Quiz & Review</div>
+    </div>
+  </section>
+
+  <section id="content" class="panel"></section>
+
+  <section class="panel">
+    <h3>Teacher notes</h3>
+    <ul class="small">
+      <li>Use physical resources (images, diagrams) where possible. This page runs offline in modern browsers.</li>
+      <li>More able: extend to research real outbreaks; less able: use provided word banks and scaffolds.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+// Utility selectors
+const $=(sel,ctx=document)=>ctx.querySelector(sel);
+const $$=(sel,ctx=document)=>Array.from((ctx||document).querySelectorAll(sel));
+
+// State
+let state={day:1};
+const content = $('#content');
+
+// Seed data for microorganism cards
+const MICROBES = [
+  {id:'bacteria',title:'Bacteria',examples:'Sore throat, food poisoning',hint:'Single-celled, some cause disease'},
+  {id:'virus',title:'Virus',examples:'Chickenpox, flu',hint:'Needs host cells to multiply'},
+  {id:'fungi',title:'Fungi',examples:'Ringworm, athlete\'s foot',hint:'Can grow on skin'},
+  {id:'parasite',title:'Parasite',examples:'Tapeworm, lice',hint:'Lives on or in a host'}
+];
+
+// Render templates for each day
+function tplDay1(){
+  return `
+  <div class="row">
+    <div class="col card">
+      <h3>Day 1 — Types of Microorganisms</h3>
+      <p class="small">Click each card to reveal short facts and examples. Then play the quick matching quiz.</p>
+      <div id="microBank" class="list" style="margin-top:8px"></div>
+      <div style="margin-top:12px"><button id="startMatch" class="btn">Start Matching Quiz</button> <button id="revealAll" class="ghost">Reveal All</button></div>
+      <div id="day1FB" style="margin-top:8px"></div>
+    </div>
+    <div class="col card">
+      <h4 class="small">Class activity</h4>
+      <p class="small">Discuss: what causes disease? Create a whole-class mind-map listing bacteria, viruses, fungi, parasites and examples.</p>
+    </div>
+  </div>`;
+}
+
+function tplDay2(){
+  return `
+  <div class="row">
+    <div class="col card">
+      <h3>Day 2 — Body's First Line of Defence</h3>
+      <p class="small">Click body parts to reveal their protective role. Drag defence labels onto the correct place on the diagram.</p>
+      <div style="display:flex;gap:10px;align-items:flex-start;margin-top:8px">
+        <div style="flex:1">
+          <div class="small">Defence labels</div>
+          <div id="defBank" class="list" style="margin-top:8px"></div>
+        </div>
+        <div style="flex:2">
+          <div class="small">Diagram (click parts or drop labels)</div>
+          <div style="margin-top:8px;border:1px solid #eef7f6;border-radius:8px;padding:10px;background:#fff">
+            <!-- simplified clickable diagram using boxes -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="cardItem" data-part="skin">Skin</div>
+              <div class="cardItem" data-part="mucus">Mucus & Nose Hairs</div>
+              <div class="cardItem" data-part="tears">Tears</div>
+              <div class="cardItem" data-part="stomach">Stomach Acid</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px"><button id="checkDef" class="btn">Check Defence Matching</button> <span id="defFB" style="margin-left:8px"></span></div>
+    </div>
+    <div class="col card">
+      <h4 class="small">Activity</h4>
+      <p class="small">Label a worksheet (digital or printed). Less able: provided labels and clues.</p>
+    </div>
+  </div>`;
+}
+
+function tplDay3(){
+  return `
+  <div class="row">
+    <div class="col card">
+      <h3>Day 3 — Hygiene & Transmission</h3>
+      <p class="small">Create a hygiene mind-map and play the transmission sorting game.</p>
+      <div style="margin-top:8px">Mind-map node: <input id="nodeText" placeholder="e.g., Wash hands"> <button id="addNode" class="btn">Add</button></div>
+      <div id="mindMap" style="margin-top:8px;min-height:80px;border-radius:8px;padding:8px;border:1px solid #eef7f6;background:#fbfffe"></div>
+      <hr style="margin-top:12px;margin-bottom:12px">
+      <h4 class="small">Transmission sorting — drag examples into correct boxes</h4>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <div style="flex:1">
+          <div class="small">Examples</div>
+          <div id="transBank" class="list" style="margin-top:8px"></div>
+        </div>
+        <div style="flex:2">
+          <div class="small">Drop zones</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <div class="card" style="flex:1;min-width:140px"><strong>Water</strong><div class="dropzone" data-method="water" id="tz-water"></div></div>
+            <div class="card" style="flex:1;min-width:140px"><strong>Vectors (e.g., mosquitoes)</strong><div class="dropzone" data-method="vector" id="tz-vector"></div></div>
+            <div class="card" style="flex:1;min-width:140px"><strong>Direct Contact</strong><div class="dropzone" data-method="contact" id="tz-contact"></div></div>
+            <div class="card" style="flex:1;min-width:140px"><strong>Airborne / Droplets</strong><div class="dropzone" data-method="air" id="tz-air"></div></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px"><button id="checkTrans" class="btn">Check Transmission Sorting</button> <span id="transFB" style="margin-left:8px"></span></div>
+    </div>
+    <div class="col card">
+      <h4 class="small">Group task</h4>
+      <p class="small">Create a group mind-map. Less able: give a partially completed mind-map and word bank.</p>
+    </div>
+  </div>`;
+}
+
+function tplDay4(){
+  return `
+  <div class="row">
+    <div class="col card">
+      <h3>Day 4 — Quiz & Review</h3>
+      <p class="small">Complete the quick quiz. Honest effort — encourage reflection afterwards.</p>
+      <div id="quizArea"></div>
+      <div style="margin-top:8px"><button id="startQuiz" class="btn">Start Quiz</button> <button id="exportResults" class="ghost">Export Results (CSV)</button> <span id="quizFB" style="margin-left:8px"></span></div>
+    </div>
+    <div class="col card">
+      <h4 class="small">Reflection</h4>
+      <p class="small">Which question was easiest? Hardest? How will you revise?</p>
+    </div>
+  </div>`;
+}
+
+// Helper to render current day
+function render(){
+  if(state.day===1) content.innerHTML = tplDay1();
+  if(state.day===2) content.innerHTML = tplDay2();
+  if(state.day===3) content.innerHTML = tplDay3();
+  if(state.day===4) content.innerHTML = tplDay4();
+  attach();
+}
+
+// Attach handlers (safe: attach after DOM created)
+function attach(){
+  // tabs
+  $$('.tab').forEach((t,i)=> t.onclick = ()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); state.day = i+1; render(); });
+  $('#resetAll').onclick = ()=> location.reload();
+
+  // Day 1 handlers
+  if(state.day===1){
+    const bank = $('#microBank'); bank.innerHTML='';
+    MICROBES.forEach(m=>{
+      const el = document.createElement('div'); el.className='cardItem'; el.dataset.id = m.id;
+      el.innerHTML = `<div class="title">${m.title}</div><div class="small hint" style="display:none">Examples: ${m.examples}<br>Note: ${m.hint}</div>`;
+      bank.appendChild(el);
+    });
+    // delegated click to reveal
+    bank.onclick = e=>{ const card = e.target.closest('.cardItem'); if(!card) return; const hint = card.querySelector('.hint'); if(!hint) return; hint.style.display = hint.style.display==='none'? 'block':'none'; card.classList.toggle('revealed'); };
+
+    $('#revealAll').onclick = ()=>{ $$('.cardItem').forEach(c=>{ const hint = c.querySelector('.hint'); if(hint) hint.style.display='block'; c.classList.add('revealed'); }); };
+
+    $('#startMatch').onclick = ()=>{
+      const fb = $('#day1FB'); fb.innerHTML='';
+      const items = MICROBES.slice().sort(()=>Math.random()-0.5);
+      // build simple matching quiz: show titles and dropdowns
+      const wrapper = document.createElement('div'); wrapper.className='small';
+      items.forEach(m=>{ const div = document.createElement('div'); div.style.marginTop='6px'; div.innerHTML = `${m.title}: <select data-id='${m.id}' class='mSel'><option value=''>Choose example type</option><option value='bacteria'>Bacteria</option><option value='virus'>Virus</option><option value='fungi'>Fungi</option><option value='parasite'>Parasite</option></select>`; wrapper.appendChild(div); });
+      const checkBtn = document.createElement('button'); checkBtn.textContent='Check'; checkBtn.className='btn'; checkBtn.onclick = ()=>{
+        const sels = Array.from(document.querySelectorAll('.mSel')); let corr=0; sels.forEach(s=>{ const id=s.dataset.id; const chosen = s.value; const real = MICROBES.find(x=>x.id===id).id; if(chosen===real) corr++; }); wrapper.innerHTML += `<div class="result ${corr===sels.length?'correct':'wrong'}">${corr} / ${sels.length} correct</div>`; };
+      wrapper.appendChild(checkBtn);
+      fb.appendChild(wrapper);
+    };
+  }
+
+  // Day 2 handlers
+  if(state.day===2){
+    // defence labels bank
+    const labels = [ {id:'skin',text:'Barrier — stops germs'}, {id:'mucus',text:'Traps germs in nose'}, {id:'tears',text:'Wash away germs'}, {id:'stomach',text:'Acid kills microbes'} ];
+    const bank = $('#defBank'); bank.innerHTML=''; labels.forEach(l=>{ const el = document.createElement('div'); el.className='chip'; el.draggable=true; el.dataset.id=l.id; el.textContent = l.text; bank.appendChild(el); el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', l.id)); });
+    // click to show explanation
+    $$('.cardItem').forEach(ci=> ci.onclick = ()=>{ const part = ci.dataset.part; const lab = labels.find(x=>x.id===part); const fb = $('#defFB'); if(lab) fb.innerHTML = `<div class="small">${ci.textContent} — ${lab.text}</div>`; });
+    // dropzones
+    $$('.cardItem').forEach(ci=>{ ci.ondragover = e=> e.preventDefault(); ci.ondrop = e=>{ e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); const label = labels.find(x=>x.id===id); if(!label) return; // attach badge inside the part
+        const badge = document.createElement('div'); badge.className='chip'; badge.textContent = label.text; ci.appendChild(badge); } });
+    $('#checkDef').onclick = ()=>{
+      let correct=0; const parts = document.querySelectorAll('.cardItem'); parts.forEach(p=>{ const part = p.dataset.part; const placed = Array.from(p.querySelectorAll('.chip')).map(c=>c.textContent); const expected = labels.find(l=>l.id===part).text; if(placed.includes(expected)) correct++; }); $('#defFB').innerHTML = `<div class="result ${correct===4?'correct':'wrong'}">${correct} of 4 labelled correctly</div>`; };
+  }
+
+  // Day 3 handlers
+  if(state.day===3){
+    // mind map
+    const mind = $('#mindMap'); mind.innerHTML=''; $('#addNode').onclick = ()=>{ const txt = $('#nodeText').value.trim(); if(!txt){ mind.innerHTML = '<div class="small">Enter text and click Add</div>'; return; } const n = document.createElement('div'); n.className='chip'; n.textContent = txt; mind.appendChild(n); $('#nodeText').value=''; };
+
+    // transmission bank
+    const transExamples = [ {id:'dirtywater',label:'Drinking contaminated water',method:'water'}, {id:'mosquito',label:'Mosquito bite (malaria/dengue)',method:'vector'}, {id:'touch',label:'Touching infected person',method:'contact'}, {id:'cough',label:'Cough droplets',method:'air'} ];
+    const bank = $('#transBank'); bank.innerHTML=''; transExamples.forEach(t=>{ const el=document.createElement('div'); el.className='cardItem'; el.draggable=true; el.dataset.id=t.id; el.dataset.method=t.method; el.textContent = t.label; bank.appendChild(el); el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', JSON.stringify({id:t.id,method:t.method,label:t.label}))); });
+    $$('.dropzone').forEach(dz=>{ dz.innerHTML=''; dz.ondragover = e=> e.preventDefault(); dz.ondrop = e=>{ e.preventDefault(); const data = e.dataTransfer.getData('text/plain'); try{ const obj = JSON.parse(data); const badge = document.createElement('div'); badge.className='chip'; badge.textContent = obj.label; badge.dataset.method = obj.method; dz.appendChild(badge); }catch(err){console.error(err);} }; });
+    $('#checkTrans').onclick = ()=>{ const placed=[]; $$('.dropzone').forEach(dz=>{ const expected = dz.dataset.method; Array.from(dz.children).forEach(ch=> placed.push({label:ch.textContent,method:ch.dataset.method,expected})); }); let corr=0; placed.forEach(p=>{ if(p.method===p.expected) corr++; }); const total = transExamples.length; $('#transFB').innerHTML = `<div class="result ${corr===total?'correct':'wrong'}">${corr} of ${total} correct</div>`; };
+  }
+
+  // Day 4 handlers
+  if(state.day===4){
+    const quizQ = [
+      {id:'q1',type:'mc',q:'Which microbe needs a host cell to multiply?',opts:['Bacteria','Virus','Fungi','Parasite'],answer:'Virus'},
+      {id:'q2',type:'sa',q:'Name one body defence that traps germs in the nose.',answer:'Mucus'},
+      {id:'q3',type:'mc',q:'Which prevention stops mosquito-borne disease?',opts:['Vaccination','Mosquito nets','Boiling water','Wearing masks'],answer:'Mosquito nets'},
+      {id:'q4',type:'label',q:'Label the part: which defence is the skin? (type "skin")',answer:'skin'}
+    ];
+    $('#startQuiz').onclick = ()=>{
+      const area = $('#quizArea'); area.innerHTML=''; quizQ.forEach((qq,i)=>{
+        const wrapper = document.createElement('div'); wrapper.style.marginTop='8px'; wrapper.className='small';
+        wrapper.dataset.id = qq.id;
+        if(qq.type==='mc'){
+          wrapper.innerHTML = `<div>${i+1}. ${qq.q}</div>`;
+          const sel = document.createElement('select'); sel.className='qsel'; sel.innerHTML = `<option value=''>Choose</option>` + qq.opts.map(o=>`<option value='${o}'>${o}</option>`).join(''); wrapper.appendChild(sel);
+        }else if(qq.type==='sa'){
+          wrapper.innerHTML = `<div>${i+1}. ${qq.q}</div><input class='qinput' placeholder='Short answer'>`;
+        }else if(qq.type==='label'){
+          wrapper.innerHTML = `<div>${i+1}. ${qq.q}</div><input class='qinput' placeholder='Label'>`;
+        }
+        area.appendChild(wrapper);
+      });
+      const btn = document.createElement('button'); btn.textContent='Submit Answers'; btn.className='btn'; btn.onclick = ()=>{
+        const wrappers = Array.from(area.children).filter(n=>n.dataset.id);
+        let score=0; const results=[];
+        wrappers.forEach(w=>{
+          const id=w.dataset.id; const q = quizQ.find(x=>x.id===id);
+          if(q.type==='mc'){ const ans = w.querySelector('.qsel').value; if(ans===q.answer) { score++; results.push({id,ok:true}); } else results.push({id,ok:false}); }
+          else if(q.type==='sa' || q.type==='label'){ const ans = (w.querySelector('.qinput').value||'').trim().toLowerCase(); if(ans && q.answer.toLowerCase().includes(ans)) { score++; results.push({id,ok:true}); } else results.push({id,ok:false}); }
+        });
+        $('#quizFB').innerHTML = `<div class="result ${score===wrappers.length?'correct':'wrong'}">Score: ${score} / ${wrappers.length}</div>`;
+        // store last results to localStorage for export
+        localStorage.setItem('y6_quiz_results', JSON.stringify({score,total:wrappers.length,details:results,ts:Date.now()}));
+      };
+      area.appendChild(btn);
+    };
+    $('#exportResults').onclick = ()=>{
+      const raw = localStorage.getItem('y6_quiz_results'); if(!raw){ $('#quizFB').innerHTML = '<div class="result wrong">No results to export. Run the quiz first.</div>'; return; }
+      const obj = JSON.parse(raw); const csv = `score,total,timestamp\n${obj.score},${obj.total},${new Date(obj.ts).toLocaleString()}`;
+      const blob = new Blob([csv],{type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'y6_quiz_results.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); $('#quizFB').innerHTML = '<div class="result correct">Exported CSV</div>';
+    };
+  }
+}
+
+// initialize
+$$('.tab').forEach((t,i)=> t.addEventListener('click', ()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); state.day = i+1; render(); }));
+$('#resetAll').addEventListener('click', ()=> location.reload());
+render();
+</script>
+</body>
+</html>

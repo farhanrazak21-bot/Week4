@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Year 1 — Number Patterns Interactive (0–20)</title>
+<style>
+  :root{--bg:#fffbf0;--card:#ffffff;--muted:#6b7280;--brand:#0ea5a3;--accent:#073b4c}
+  *{box-sizing:border-box;font-family:Nunito, system-ui, -apple-system, 'Segoe UI', Roboto, Arial}
+  body{margin:0;background:linear-gradient(180deg,#fffaf0,#f0fcfb);color:var(--accent)}
+  header{display:flex;align-items:center;gap:12px;padding:14px}
+  h1{margin:0;font-size:20px}
+  .container{max-width:1100px;margin:12px auto;padding:12px}
+  .panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 20px rgba(7,59,76,0.06);margin-bottom:12px}
+  .days{display:flex;gap:8px;flex-wrap:wrap}
+  .day-btn{padding:8px 12px;border-radius:10px;border:1px solid transparent;background:#e8fdf7;cursor:pointer}
+  .day-btn.active{background:var(--brand);color:white}
+  .grid{display:grid;grid-template-columns:repeat(11,1fr);gap:8px}
+  .card{background:#fff;border-radius:8px;padding:10px;text-align:center;font-weight:700;cursor:pointer;border:2px solid #e6f7f6}
+  .big{font-size:24px;padding:14px}
+  .small{font-size:13px;color:var(--muted)}
+  .controls{display:flex;gap:8px;align-items:center}
+  button.btn{padding:8px 12px;border-radius:10px;border:0;background:var(--brand);color:white;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid #cfeeea;color:var(--accent)}
+  .center{display:flex;align-items:center;justify-content:center}
+  .numberline{display:flex;gap:6px;flex-wrap:wrap}
+  .slot{width:44px;height:44px;background:#fbfcff;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px dashed #dbeffd}
+  .highlight{background:linear-gradient(90deg,#dff8f4,#eafcff);border:2px solid #bfeee1}
+  .result{margin-top:8px;padding:8px;border-radius:8px}
+  .correct{background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46}
+  .wrong{background:#fff1f2;border:1px solid #fecaca;color:#7f1d1d}
+  @media (max-width:800px){.grid{grid-template-columns:repeat(6,1fr)} }
+</style>
+</head>
+<body>
+<header>
+  <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#0ea5a3,#0284c7);display:flex;align-items:center;justify-content:center;color:white;font-weight:800">Y1</div>
+  <div>
+    <h1>Number Patterns — Interactive (0–20)</h1>
+    <div class="small">Five lessons: Counting, Count by 2s, Bundles & Skip Counting, Even/Odd, Weekly Review</div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="panel">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div>
+        <div class="small">Start each lesson with a short dua and a warm greeting.</div>
+        <strong>Connect to Islamic reflections and gratitude (Alhamdulillah).</strong>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <label class="small">Max number: <select id="maxN"><option>20</option></select></label>
+        <button id="resetAll" class="ghost">Reset</button>
+      </div>
+    </div>
+    <div style="margin-top:12px" class="days">
+      <button class="day-btn active" data-day="1">Mon — Counting 0–20</button>
+      <button class="day-btn" data-day="2">Tue — Count by 2s</button>
+      <button class="day-btn" data-day="3">Wed — Bundles & Skip</button>
+      <button class="day-btn" data-day="4">Thu — Even / Odd</button>
+      <button class="day-btn" data-day="5">Fri — Review Quiz</button>
+    </div>
+  </section>
+
+  <section id="dayContent" class="panel"></section>
+
+  <section class="panel">
+    <h3>Teacher Notes</h3>
+    <ul class="small">
+      <li>Use real objects (socks, pencils, cubes) for hands-on practice.</li>
+      <li>More able students: count beyond 20, find missing two numbers, count by 5s or 10s.</li>
+      <li>Less able students: use number line 0–10 and one-to-one matching with counters.</li>
+      <li>Plenary ideas: chants, pass-the-ball (real class), quick oral quiz.</li>
+    </ul>
+  </section>
+
+  <footer class="small center">Save this HTML and open in a browser. Use in whole-class teaching or small-group stations.</footer>
+</main>
+
+<script>
+const $ = (s,ctx=document)=>ctx.querySelector(s);
+const $$ = (s,ctx=document)=>Array.from((ctx||document).querySelectorAll(s));
+const dayContent = $('#dayContent');
+let state = {day:1, maxN:20};
+
+function makeGrid(){
+  let html=''; for(let i=0;i<=state.maxN;i++) html += `<div class="card big" data-n="${i}">${i}</div>`;
+  return `<div><div class="small">Show number cards 0–${state.maxN}</div><div style="margin-top:8px" class="grid">${html}</div></div>`;
+}
+
+function createDay1(){
+  return `
+  <div>
+    <div class="small">Starter: Greet and show number cards. Use the numberline to count forward/backward.</div>
+    <div style="margin-top:10px">${makeGrid()}</div>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <button id="forward" class="btn">Count Forward (0→20)</button>
+      <button id="backward" class="btn">Count Backward (20→0)</button>
+      <button id="missing" class="btn ghost">Find Missing Number</button>
+    </div>
+    <div id="day1fb" style="margin-top:10px"></div>
+  </div>`;
+}
+
+function createDay2(){
+  // count by 2s
+  let options=''; for(let i=2;i<=20;i+=2) options += `<div class="card" data-n="${i}">${i}</div>`;
+  return `
+  <div>
+    <div class="small">Starter: Show pairs and sing Counting by Twos. Highlight 2,4,6...20.</div>
+    <div style="margin-top:8px" class="grid">${options}</div>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <button id="playTwos" class="btn">Play Count by 2s</button>
+      <button id="fillTwos" class="btn ghost">Fill missing in sequence</button>
+      <button id="colourGrid" class="btn">Colour every 2nd</button>
+    </div>
+    <div id="day2fb" style="margin-top:10px"></div>
+  </div>`;
+}
+
+function createDay3(){
+  return `
+  <div>
+    <div class="small">Starter: Show bundles (10 sticks or 2s bundles). Guided: Twos Tower activity.</div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <label>Make bundles of size: <select id="bundleSize"><option>2</option><option>5</option><option selected>10</option></select></label>
+      <button id="makeBundle" class="btn">Create Bundles</button>
+      <button id="resetBundles" class="btn ghost">Reset</button>
+    </div>
+    <div id="bundlesArea" style="margin-top:12px"></div>
+    <div style="margin-top:12px" class="small">Tip: Use real sticks or cubes to make towers of 10 (10 ones = 1 ten).</div>
+  </div>`;
+}
+
+function createDay4(){
+  // even odd sorting
+  let html=''; for(let i=0;i<=state.maxN;i++) html += `<div class="slot" data-n="${i}">${i}</div>`;
+  return `
+  <div>
+    <div class="small">Starter: Pair objects to show even vs odd. Walk the number line: left=even, right=odd activity.</div>
+    <div style="margin-top:8px" class="numberline">${html}</div>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <button id="markEven" class="btn">Mark Even</button>
+      <button id="markOdd" class="btn">Mark Odd</button>
+      <button id="sortCards" class="btn ghost">Auto Sort to Baskets</button>
+    </div>
+    <div id="day4fb" style="margin-top:10px"></div>
+  </div>`;
+}
+
+function createDay5(){
+  // Weekly review quiz simple
+  return `
+  <div>
+    <div class="small">Weekly Review: Mix of missing number, skip count and even/odd quick quiz.</div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button id="quizMissing" class="btn">Missing Number Quiz</button>
+      <button id="quizTwos" class="btn">Skip Count 2s Quiz</button>
+      <button id="quizEO" class="btn">Even/Odd Quiz</button>
+    </div>
+    <div id="quizArea" style="margin-top:12px"></div>
+  </div>`;
+}
+
+function render(){
+  if(state.day===1) dayContent.innerHTML = createDay1();
+  if(state.day===2) dayContent.innerHTML = createDay2();
+  if(state.day===3) dayContent.innerHTML = createDay3();
+  if(state.day===4) dayContent.innerHTML = createDay4();
+  if(state.day===5) dayContent.innerHTML = createDay5();
+  attachHandlers();
+}
+
+function attachHandlers(){
+  $$('.day-btn').forEach(b=>b.addEventListener('click', ()=>{ $$('.day-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); state.day=Number(b.dataset.day); render(); }));
+  $('#resetAll').addEventListener('click', ()=>{ state.maxN=20; render(); });
+
+  if(state.day===1){
+    $$('.card.big').forEach(c=>c.addEventListener('click', ()=>{ c.classList.toggle('highlight'); }));
+    $('#forward').addEventListener('click', ()=>{ const area = Array.from($$('.card.big')).map(x=>x.dataset.n).join(' '); speakSequence(Array.from($$('.card.big')).map(x=>x.dataset.n)); $('#day1fb').innerHTML='<div class="result correct">Counted forward — great chanting!</div>'; });
+    $('#backward').addEventListener('click', ()=>{ const arr = Array.from($$('.card.big')).map(x=>Number(x.dataset.n)).reverse(); speakSequence(arr); $('#day1fb').innerHTML='<div class="result correct">Counted backward — well done!</div>'; });
+    $('#missing').addEventListener('click', ()=>{ // hide one random
+      const all = Array.from($$('.card.big')); const idx = Math.floor(Math.random()*all.length); const chosen = all[idx]; chosen.style.visibility='hidden'; $('#day1fb').innerHTML='<div class="result">Which number is missing? Click the missing card to reveal.</div>';
+      chosen.addEventListener('click', ()=>{ chosen.style.visibility='visible'; $('#day1fb').innerHTML='<div class="result correct">Correct — you found the missing number!</div>'; },{once:true});
+    });
+  }
+
+  if(state.day===2){
+    $('#playTwos').addEventListener('click', ()=>{ const seq = []; for(let i=2;i<=20;i+=2) seq.push(i); speakSequence(seq); $('#day2fb').innerHTML='<div class="result correct">Well done — count by twos!</div>'; });
+    $('#fillTwos').addEventListener('click', ()=>{ // show sequence with blanks
+      const seq = []; for(let i=2;i<=20;i+=2) seq.push(i);
+      const blanks = seq.map((v,i)=> i%3===1? '___': v); $('#day2fb').innerHTML = '<div class="small">Fill the blanks: '+blanks.join(', ')+'</div>'; });
+    $('#colourGrid').addEventListener('click', ()=>{ Array.from($$('.grid .card')).forEach(c=>{ if(Number(c.dataset.n)%2===0) c.classList.add('highlight'); else c.classList.remove('highlight'); }); $('#day2fb').innerHTML='<div class="result">Every 2nd number highlighted.</div>'; });
+  }
+
+  if(state.day===3){
+    $('#makeBundle').addEventListener('click', ()=>{
+      const size = Number($('#bundleSize').value); const area = $('#bundlesArea'); area.innerHTML=''; let total= state.maxN+1; // show items
+      let items = [];
+      for(let i=0;i<total;i++) items.push('•');
+      const groups = [];
+      while(items.length) groups.push(items.splice(0,size));
+      groups.forEach((g,i)=>{ const el = document.createElement('div'); el.className='small'; el.textContent = `Bundle ${i+1}: ${g.length} items`; area.appendChild(el); });
+      $('#bundlesArea').innerHTML += `<div class="small">Created ${groups.length} bundle(s). Use real cubes for hands-on counting.</div>`;
+    });
+    $('#resetBundles').addEventListener('click', ()=>{ $('#bundlesArea').innerHTML=''; });
+  }
+
+  if(state.day===4){
+    $('#markEven').addEventListener('click', ()=>{ Array.from($$('.slot')).forEach(s=>{ const n=Number(s.dataset.n); if(n%2===0) s.classList.add('highlight'); else s.classList.remove('highlight'); }); $('#day4fb').innerHTML='<div class="result correct">Even numbers marked.</div>'; });
+    $('#markOdd').addEventListener('click', ()=>{ Array.from($$('.slot')).forEach(s=>{ const n=Number(s.dataset.n); if(n%2===1) s.classList.add('highlight'); else s.classList.remove('highlight'); }); $('#day4fb').innerHTML='<div class="result correct">Odd numbers marked.</div>'; });
+    $('#sortCards').addEventListener('click', ()=>{ // create baskets
+      const even=[]; const odd=[]; Array.from($$('.slot')).forEach(s=>{ const n=Number(s.dataset.n); if(n%2===0) even.push(n); else odd.push(n); }); $('#day4fb').innerHTML = `<div class="small">Even: ${even.join(', ')}<br>Odd: ${odd.join(', ')}</div>`; });
+  }
+
+  if(state.day===5){
+    $('#quizMissing')?.addEventListener('click', ()=>{ // generate 3 missing quizzes
+      const q=[]; for(let i=0;i<3;i++){ const n = Math.floor(Math.random()*19)+1; q.push({prompt:`${n-1}, ___, ${n+1}`,answer:n}); }
+      const area = $('#quizArea'); area.innerHTML=''; q.forEach((t,i)=>{ const div=document.createElement('div'); div.className='small'; div.innerHTML = `Q${i+1}: ${t.prompt} <input data-ans="${t.answer}" style="width:60px"> <button data-i="${i}" class="btn">Check</button> <span class="qfb"></span>`; area.appendChild(div); div.querySelector('button').addEventListener('click', ()=>{ const val = div.querySelector('input').value; const fb = div.querySelector('.qfb'); if(Number(val)===t.answer) fb.innerHTML='<span class="result correct">✔</span>'; else fb.innerHTML='<span class="result wrong">✖</span>'; }); });
+    });
+    $('#quizTwos')?.addEventListener('click', ()=>{ const seq=[2,4,6,8,10]; const area=$('#quizArea'); area.innerHTML=`<div class="small">Fill next: ${seq.join(', ')}, ___, ___</div>`; });
+    $('#quizEO')?.addEventListener('click', ()=>{ const n = Math.floor(Math.random()*21); const area = $('#quizArea'); area.innerHTML = `<div class="small">Is ${n} even or odd? <button id="ansEven" class="btn">Even</button> <button id="ansOdd" class="btn ghost">Odd</button> <span id="qfb"></span></div>`; $('#ansEven').addEventListener('click', ()=>{ $('#qfb').innerHTML = (n%2===0)?'<span class="result correct">Correct</span>':'<span class="result wrong">Wrong</span>'; }); $('#ansOdd').addEventListener('click', ()=>{ $('#qfb').innerHTML = (n%2===1)?'<span class="result correct">Correct</span>':'<span class="result wrong">Wrong</span>'; }); });
+  }
+}
+
+function speakSequence(arr){ // simple visual speak: flash numbers
+  let i=0; const cards = $$('.card.big'); function step(){ if(i>=arr.length) return; const n = String(arr[i]); const el = cards.find(c=>c.dataset.n===String(n)); if(el){ el.classList.add('highlight'); setTimeout(()=>el.classList.remove('highlight'),500); } i++; setTimeout(step,600); } step(); }
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Year 2 Maths — Compose/Decompose, Rounding & Ordinal Interactive (Fixed)</title>
+<style>
+  :root{--bg:#fffdfa;--card:#ffffff;--muted:#6b7280;--accent:#083344;--brand:#0ea5a3}
+  *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system,'Segoe UI',Roboto,Arial}
+  body{margin:0;background:linear-gradient(180deg,#fbfffb,#eef9ff);color:var(--accent)}
+  header{padding:14px 18px;display:flex;gap:12px;align-items:center}
+  h1{margin:0;font-size:18px}
+  .container{max-width:1100px;margin:12px auto;padding:14px}
+  .panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 20px rgba(8,51,68,0.06);margin-bottom:12px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;background:#eafdfb}
+  .tab.active{background:var(--brand);color:white}
+  .row{display:flex;gap:12px;align-items:flex-start}
+  .box{flex:1}
+  .card{background:#fff;border-radius:8px;padding:10px;border:1px solid #e6f3f2}
+  .small{font-size:13px;color:var(--muted)}
+  .tens, .ones{display:flex;gap:6px;flex-wrap:wrap;padding:8px;border-radius:8px;background:#fbfffe;border:1px dashed #d6f0ee}
+  .tile{min-width:48px;height:48px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;border:1px solid #e6f3f2;cursor:grab;padding:6px}
+  .drop{min-height:56px;padding:6px;border-radius:8px;background:#f8fffb;border:1px dashed #d6f0ee}
+  button.btn{padding:8px 12px;border-radius:8px;border:0;background:var(--brand);color:white;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid #cfeeea;color:var(--accent)}
+  .result{margin-top:10px;padding:8px;border-radius:8px}
+  .correct{background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46}
+  .wrong{background:#fff1f2;border:1px solid #fecaca;color:#7f1d1d}
+  .numberline{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .nl-card{width:60px;height:40px;border-radius:6px;background:#fff;border:1px solid #e6f3f2;display:flex;align-items:center;justify-content:center}
+  .ordinal-line{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .ordinal{width:70px;height:70px;border-radius:8px;background:#fff;border:1px solid #e6f3f2;display:flex;align-items:center;justify-content:center;flex-direction:column}
+  .summary{margin-top:8px;padding:8px;background:#fbfffb;border:1px solid #d6f0ee;border-radius:8px}
+  @media (max-width:900px){.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+  <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#0ea5a3,#0284c7);display:flex;align-items:center;justify-content:center;color:white;font-weight:800">Y2</div>
+  <div>
+    <h1>Year 2 Maths — Compose/Decompose, Rounding & Ordinal Interactive (Fixed)</h1>
+    <div class="small">Four lesson-days: Compose & regroup (2-digit), Round to nearest ten, Ordinal positions, Practice quiz</div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="small">Start each lesson with a warm greeting and a short dua. Link learning to gratitude and kindness.</div>
+      <div>
+        <label class="small">Mode: <select id="mode"><option>Group</option><option>Independent</option></select></label>
+        <button id="reset" class="btn ghost">Reset</button>
+      </div>
+    </div>
+    <div style="margin-top:12px" class="tabs">
+      <div class="tab active" data-day="1">Day 1 — Compose & Regroup</div>
+      <div class="tab" data-day="2">Day 2 — Round to Nearest Ten</div>
+      <div class="tab" data-day="3">Day 3 — Ordinal Numbers</div>
+      <div class="tab" data-day="4">Day 4 — Practice Quiz</div>
+    </div>
+  </section>
+
+  <section id="content" class="panel"></section>
+
+  <section class="panel">
+    <h3>Teacher notes</h3>
+    <ul class="small">
+      <li>Use physical tens-rods and ones-cubes for hands-on practice where possible.</li>
+      <li>More able: challenge to find 3–4 regroupings for a number (e.g., 45 → 40+5, 30+15, 20+25).</li>
+      <li>Less able: focus on tens and ones only (e.g., 34 = 30 + 4) with color-coded grids.</li>
+      <li>Plenary: Ask reflective questions linking accuracy to truthfulness and gratitude.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const $=(s,ctx=document)=>ctx.querySelector(s);
+const $$=(s,ctx=document)=>Array.from((ctx||document).querySelectorAll(s));
+let state={day:1};
+const content = $('#content');
+
+function day1(){
+  return `
+  <div class="row">
+    <div class="box card">
+      <h3>Compose & Decompose 2-digit numbers</h3>
+      <p class="small">Drag tiles into Tens (10s) or Ones to make the number the teacher calls. The summary will always show "X tens and Y ones" (e.g., 2 tens and 3 ones for 23).</p>
+      <div style="margin-top:8px">Choose number: <select id="chooseNum">${[12,23,34,45,56,67,78,89].map(n=>`<option>${n}</option>`).join('')}</select> <button id="setNum" class="btn">Set</button></div>
+
+      <div style="margin-top:8px">Tens area<br><div id="tensArea" class="tens drop"></div></div>
+      <div style="margin-top:8px">Ones area<br><div id="onesArea" class="ones drop"></div></div>
+
+      <div style="margin-top:8px">Tile bank (drag 10s or 1s)<br><div id="bank" class="tens"></div></div>
+
+      <div style="margin-top:8px"><button id="check1" class="btn">Check</button> <button id="regenTiles" class="btn ghost">Shuffle Tiles</button></div>
+      <div id="fb1"></div>
+
+      <div class="summary" id="summaryArea">Summary: —</div>
+    </div>
+
+    <div class="box card">
+      <h4 class="small">Regrouping helper</h4>
+      <p class="small">Click "Regroup" to see 3 example ways to make the same number.</p>
+      <div style="margin-top:8px">Number to regroup: <input id="regNum" value="45" style="width:80px"> <button id="showReg" class="btn">Show 3 Regroupings</button></div>
+      <div id="regArea" style="margin-top:8px"></div>
+    </div>
+  </div>
+  `;
+}
+
+function day2(){
+  return `
+  <div class="row">
+    <div class="box card">
+      <h3>Rounding to the nearest ten</h3>
+      <p class="small">Use the number line to decide whether to round down or up. Choose an interval (e.g., 20 — 30) to simulate the rope activity accurately.</p>
+      <div style="margin-top:8px">Interval lower ten: <input id="lowerTen" value="20" style="width:80px"> Upper ten: <input id="upperTen" value="30" style="width:80px"> <button id="simulateLine" class="btn">Simulate Rope Activity</button></div>
+      <div style="margin-top:8px">Or pick a number to round: <input id="roundPick" value="34" style="width:80px"> <button id="roundBtn" class="btn">Round</button></div>
+      <div id="roundFB" style="margin-top:8px"></div>
+      <div style="margin-top:12px" class="numberline" id="nl"></div>
+      <div style="margin-top:8px"><button id="examplesRound" class="btn ghost">Show Examples</button></div>
+      <div id="examplesFB" style="margin-top:8px"></div>
+    </div>
+
+    <div class="box card">
+      <h4 class="small">Rules</h4>
+      <p class="small">Digits 1–4 round down to the lower ten. 5–9 round up to the next ten.</p>
+    </div>
+  </div>
+  `;
+}
+
+function day3(){
+  return `
+  <div class="row">
+    <div class="box card">
+      <h3>Ordinal Numbers (1st, 2nd, 3rd...)</h3>
+      <p class="small">Identify positions and practice lining up according to ordinal cards.</p>
+      <div style="margin-top:8px">Objects: <div class="ordinal-line" id="objectsArea"></div></div>
+      <div style="margin-top:8px">Give each student a card and click 'Arrange' to let them line up by card.<br><button id="arrange" class="btn">Arrange by Ordinals</button></div>
+      <div id="ordFB" style="margin-top:8px"></div>
+    </div>
+
+    <div class="box card">
+      <h4 class="small">Interactive quiz</h4>
+      <p class="small">Click which is 1st, 3rd, 5th in the row.</p>
+      <div style="margin-top:8px" id="quizOrd"></div>
+    </div>
+  </div>
+  `;
+}
+
+function day4(){
+  return `
+  <div class="row">
+    <div class="box card">
+      <h3>Practice Quiz — Mix of all skills</h3>
+      <ol>
+        <li>Compose 34: write as tens + ones. <input id="ans1" style="width:120px"></li>
+        <li>Round 47 to nearest ten: <input id="ans2" style="width:80px"></li>
+        <li>Which is 2nd in this list: <span id="q3list">red, blue, green</span> <input id="ans3" style="width:80px"></li>
+      </ol>
+      <div style="margin-top:8px"><button id="checkQuiz" class="btn">Check Answers</button></div>
+      <div id="quizFB" style="margin-top:8px"></div>
+    </div>
+    <div class="box card">
+      <h4 class="small">Teacher space</h4>
+      <p class="small">Use this page for exit tickets and save student responses if needed.</p>
+    </div>
+  </div>
+  `;
+}
+
+function render(){
+  if(state.day===1) content.innerHTML = day1();
+  if(state.day===2) content.innerHTML = day2();
+  if(state.day===3) content.innerHTML = day3();
+  if(state.day===4) content.innerHTML = day4();
+  attach();
+}
+
+function attach(){
+  $$('.tab').forEach(t=>t.addEventListener('click',()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); state.day = Number(t.dataset.day); render(); }));
+  $('#reset').addEventListener('click', ()=>{ location.reload(); });
+
+  if(state.day===1){
+    // bank contains aggregated tiles: TEN tile and ONE tile for dragging
+    const bank = $('#bank'); bank.innerHTML = '';
+    const tenTile = document.createElement('div'); tenTile.className='tile'; tenTile.textContent='10 (ten)'; tenTile.draggable=true; bank.appendChild(tenTile);
+    const oneTile = document.createElement('div'); oneTile.className='tile'; oneTile.textContent='1 (one)'; oneTile.draggable=true; bank.appendChild(oneTile);
+    [tenTile, oneTile].forEach(t=> t.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', t.textContent)));
+
+    // drop zones
+    ['tensArea','onesArea'].forEach(id=>{ const el = $('#'+id); el.innerHTML=''; el.addEventListener('dragover', e=> e.preventDefault()); el.addEventListener('drop', e=>{ e.preventDefault(); const val = e.dataTransfer.getData('text/plain'); const d = document.createElement('div'); d.className='tile'; d.textContent = val; el.appendChild(d); updateSummary(); }); });
+
+    // set number: instead of filling with many '10' tiles, show compact representation AND allow teachers/students to build
+    $('#setNum').addEventListener('click', ()=>{ const n = Number($('#chooseNum').value); $('#tensArea').innerHTML=''; $('#onesArea').innerHTML=''; const tens = Math.floor(n/10); const ones = n%10; // show compact tiles: one tile with "X tens" and X ones tiles
+      const tensSummary = document.createElement('div'); tensSummary.className='tile'; tensSummary.textContent = `${tens} tens`; $('#tensArea').appendChild(tensSummary);
+      for(let i=0;i<ones;i++){ const d=document.createElement('div'); d.className='tile'; d.textContent='1'; $('#onesArea').appendChild(d); }
+      $('#fb1').innerHTML = `<div class="small">Number set to ${n}. Summary shows tens & ones. You can drag 10 (ten) or 1 (one) tiles from bank to change grouping.</div>`; updateSummary(); });
+
+    function updateSummary(){ const tensTiles = $('#tensArea').querySelectorAll('.tile'); let tensCount=0; let onesCount=0; tensTiles.forEach(t=>{ const text = t.textContent; if(text.includes('tens')){ // 'X tens' summary tile
+          tensCount += Number(text.split(' ')[0]);
+        } else if(text.includes('10')){ tensCount +=1; } }); $('#onesArea').querySelectorAll('.tile').forEach(o=>{ const v = parseInt(o.textContent) || 0; if(v===1) onesCount+=1; else if(o.textContent.includes('ones')) onesCount += Number(o.textContent.split(' ')[0]); });
+      $('#summaryArea').textContent = `Summary: ${tensCount} tens and ${onesCount} ones (${tensCount*10 + onesCount})`;
+    }
+
+    $('#check1').addEventListener('click', ()=>{ const tensTiles = $('#tensArea').querySelectorAll('.tile'); let tensCount=0; let onesCount=0; tensTiles.forEach(t=>{ const text = t.textContent; if(text.includes('tens')) tensCount += Number(text.split(' ')[0]); else if(text.includes('10')) tensCount+=1; }); $('#onesArea').querySelectorAll('.tile').forEach(o=>{ const v = parseInt(o.textContent) || 0; if(v===1) onesCount+=1; else if(o.textContent.includes('ones')) onesCount += Number(o.textContent.split(' ')[0]); }); const val = tensCount*10 + onesCount; const choose = Number($('#chooseNum').value); if(val===choose) $('#fb1').innerHTML = '<div class="result correct">Good — your tens and ones make '+val+'</div>'; else $('#fb1').innerHTML = '<div class="result wrong">Not matching. You made '+val+' but teacher asked '+choose+'</div>'; });
+
+    $('#regenTiles').addEventListener('click', ()=>{ render(); });
+
+    $('#showReg').addEventListener('click', ()=>{
+      const n = Number($('#regNum').value)||45; const r = [];
+      const tens = Math.floor(n/10); const ones = n%10;
+      r.push(`${tens} tens + ${ones} ones = ${n}`);
+      // shift one ten into ten ones
+      r.push(`${tens-1} tens + ${10+ones} ones = ${n}`);
+      r.push(`${tens-2} tens + ${20+ones} ones = ${n}`);
+      $('#regArea').innerHTML = r.map(x=>`<div class="small">${x}</div>`).join('');
+    });
+  }
+
+  if(state.day===2){
+    // build nl display of tens between 0-100
+    const nl = $('#nl'); nl.innerHTML=''; for(let i=0;i<=100;i+=10){ const c = document.createElement('div'); c.className='nl-card'; c.textContent = i; nl.appendChild(c); }
+
+    $('#roundBtn').addEventListener('click', ()=>{
+      const n = Number($('#roundPick').value); if(isNaN(n)){ $('#roundFB').innerHTML = '<div class="result wrong">Enter a number</div>'; return; }
+      const lower = Math.floor(n/10)*10; const upper = lower+10; const ones = n - lower; const rounded = (ones>=5)? upper : lower; $('#roundFB').innerHTML = `<div class="result correct">${n} rounds to ${rounded} (because ones = ${ones})</div>`;
+    });
+
+    // Simulate rope numberline activity properly between chosen lower and upper tens
+    $('#simulateLine').addEventListener('click', ()=>{
+      const lower = Number($('#lowerTen').value); const upper = Number($('#upperTen').value);
+      if(isNaN(lower) || isNaN(upper) || upper-lower !== 10){ $('#roundFB').innerHTML = '<div class="result wrong">Please enter a valid interval that is 10 apart (e.g., 20 and 30).</div>'; return; }
+      // show a set of sample student numbers between lower and upper and where they would stand
+      const samples = []; for(let i=0;i<10;i++){ samples.push(lower + i + 1); } // e.g., 21..30
+      // build display
+      const list = samples.map(n=>{ const ones = n - lower; const go = (ones>=5)? upper : lower; return `<div class="small">${n} → rounds to <strong>${go}</strong> (${ones} ones ⇒ ${ones>=5? 'up':'down'})</div>`; }).join('');
+      $('#roundFB').innerHTML = `<div class="small">Rope activity simulation for interval ${lower} — ${upper}:</div>${list}`;
+    });
+
+    $('#examplesRound').addEventListener('click', ()=>{ $('#examplesFB').innerHTML = '<div class="small">Examples: 34 → 30 (ones = 4 → down), 68 → 70 (ones = 8 → up), 45 → 50 (ones = 5 → up)</div>'; });
+  }
+
+  if(state.day===3){
+    const objArea = $('#objectsArea'); objArea.innerHTML=''; const colours = ['red','blue','green','yellow','purple']; colours.forEach((c,i)=>{ const d=document.createElement('div'); d.className='ordinal'; d.style.border='2px solid #f0f0f0'; d.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:${c}"></div><div class="small">${i+1}</div>`; objArea.appendChild(d); });
+    $('#arrange').addEventListener('click', ()=>{ // shuffle positions to show ordering
+      const items = Array.from(objArea.children); items.reverse().forEach(x=> objArea.appendChild(x)); $('#ordFB').innerHTML = '<div class="small">Arranged — ask: Who is 1st, 3rd, 5th?</div>'; const qarea = $('#quizOrd'); qarea.innerHTML=''; ['1st','3rd','5th'].forEach((q,ii)=>{ const sel = document.createElement('select'); sel.innerHTML = items.map((it,i)=>`<option value='${i+1}'>${i+1} - ${it.querySelector('div.small').textContent}</option>`).join(''); qarea.appendChild(document.createTextNode(q+': ')); qarea.appendChild(sel); qarea.appendChild(document.createElement('br')); });
+    });
+  }
+
+  if(state.day===4){
+    $('#checkQuiz').addEventListener('click', ()=>{
+      const a1 = $('#ans1').value.trim(); const a2 = $('#ans2').value.trim(); const a3 = $('#ans3').value.trim(); let ok=true; let msgs=[];
+      if(!(a1.includes('30') && (a1.includes('3')||a1.includes('30')))) { ok=false; msgs.push('Q1 may be incorrect'); }
+      if(a2 !== '50') { ok=false; msgs.push('Q2 incorrect - 47 rounds to 50'); }
+      if(a3.toLowerCase() !== 'blue') { ok=false; msgs.push('Q3 incorrect'); }
+      $('#quizFB').innerHTML = ok?'<div class="result correct">All good — great review!</div>':'<div class="result wrong">'+msgs.join('; ')+'</div>';
+    });
+  }
+}
+
+// init
+render();
+</script>
+</body>
+</html>

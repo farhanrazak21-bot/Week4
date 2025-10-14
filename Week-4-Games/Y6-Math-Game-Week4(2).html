@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Year 6 — Geometry Interactive</title>
+  <style>
+    :root{--bg:#fbfeff;--card:#fff;--muted:#6b7280;--accent:#071029;--brand:#0ea5a3}
+    *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial}
+    body{margin:0;background:linear-gradient(180deg,#f8fafc,#eef7f6);color:var(--accent)}
+    header{padding:16px 20px;display:flex;align-items:center;gap:12px}
+    h1{font-size:20px;margin:0}
+    .container{max-width:1100px;margin:12px auto;padding:14px}
+    .panel{background:var(--card);border-radius:12px;box-shadow:0 6px 18px rgba(7,16,41,0.06);padding:16px;margin-bottom:14px}
+    .days{display:flex;gap:8px;flex-wrap:wrap}
+    .day-btn{padding:8px 12px;border-radius:10px;border:1px solid transparent;cursor:pointer;background:#e6f7f6}
+    .day-btn.active{background:var(--brand);color:white}
+    .grid2{display:grid;grid-template-columns:1fr 380px;gap:12px}
+    .number-card{background:#fbfdfe;border-radius:10px;padding:14px;text-align:center;font-weight:700;font-size:24px}
+    .small{font-size:13px;color:var(--muted)}
+    .chip{padding:8px 12px;border-radius:999px;background:#f1f5f9;border:1px solid #e2e8f0;cursor:pointer;margin:4px}
+    .result{padding:10px;border-radius:8px}
+    .correct{background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46}
+    .wrong{background:#fff1f2;border:1px solid #fecaca;color:#7f1d1d}
+    canvas{background:#fff;border-radius:8px;border:1px solid #e6eef2}
+    input[type=number], input[type=text], select{width:100%;padding:8px;border-radius:8px;border:1px solid #d1d5db}
+    button.btn{padding:8px 12px;border-radius:10px;border:0;cursor:pointer}
+    .btn.primary{background:var(--brand);color:white}
+    .center{display:flex;align-items:center;justify-content:center}
+    @media (max-width:900px){.grid2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0ea5a3,#0284c7);display:flex;align-items:center;justify-content:center;color:white;font-weight:700">Y6</div>
+    <div>
+      <h1>Geometry — Interactive Games (Year 6)</h1>
+      <div class="small">Four lesson-days: Rotation, Quadrilaterals, Angles, Triangles</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div>
+          <div class="small">Start each lesson with a dua and reflection on balance in Allah's creation.</div>
+          <strong>Connect Islamic & Eco reflections in plenary.</strong>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <label class="small">Animation speed: <input id="speed" type="range" min="0.2" max="2" step="0.1" value="1"></label>
+          <button id="reset" class="btn">Reset</button>
+        </div>
+      </div>
+      <div style="margin-top:12px" class="days">
+        <button class="day-btn active" data-day="1">Day 1 — Rotation</button>
+        <button class="day-btn" data-day="2">Day 2 — Quadrilaterals</button>
+        <button class="day-btn" data-day="3">Day 3 — Measuring Angles</button>
+        <button class="day-btn" data-day="4">Day 4 — Angles in Triangles</button>
+      </div>
+    </section>
+
+    <section id="dayContent" class="panel"></section>
+
+    <section class="panel">
+      <h3>Teacher notes & plenary prompts</h3>
+      <ul class="small">
+        <li>Use tracing paper and protractors when possible; compare digital activity with hands-on tasks.</li>
+        <li>More able: test complex patterns (Islamic art) and compute rotation angles (360° ÷ order).</li>
+        <li>Less able: start with simple shapes and build to order 2 and 4 only.</li>
+        <li>Reflection: symmetry, balance, and stewardship — relate to natural patterns in flowers and shells.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const $ = (s,ctx=document)=>ctx.querySelector(s);
+    const $$ = (s,ctx=document)=>Array.from((ctx||document).querySelectorAll(s));
+    const state = {day:1, speed:1};
+    const dayContent = $('#dayContent');
+
+    function createDay1(){
+      return `
+      <div class="grid2">
+        <div>
+          <div class="number-card">Exploring Rotational Symmetry</div>
+          <div class="small" style="margin-top:8px">Pick a shape, rotate and count how many times it fits itself (order of rotation).</div>
+
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+            <select id="shapeSelect"><option value="square">Square</option><option value="rectangle">Rectangle</option><option value="equilateral">Equilateral Triangle</option><option value="regularPentagon">Regular Pentagon</option><option value="star">Star</option></select>
+            <button id="startRotate" class="btn primary">Start</button>
+            <button id="stopRotate" class="btn">Stop</button>
+            <button id="checkOrder" class="btn">Guess Order</button>
+          </div>
+
+          <div style="margin-top:12px">
+            <canvas id="rotCanvas" width="520" height="320"></canvas>
+            <div style="margin-top:8px">Your guess: <input id="orderGuess" type="number" min="1" style="width:80px;display:inline-block"> <button id="submitGuess" class="btn">Submit</button> <span id="orderFB"></span></div>
+          </div>
+
+          <hr style="margin:12px 0">
+          <div>
+            <h4>Independent Task</h4>
+            <div class="small">Record the order of rotation and calculate rotation angle (360 ÷ order).</div>
+            <label>Shape: <span id="recShape">-</span></label>
+            <label>Order: <span id="recOrder">-</span></label>
+            <label>Angle per rotation: <span id="recAngle">-</span></label>
+            <div style="margin-top:8px"><button id="recordBtn" class="btn primary">Record in workbook</button> <div id="recFB" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+
+        <aside class="panel" style="min-height:320px">
+          <h3>Class Activity — Spin & Spot</h3>
+          <div class="small">Teacher rotates shape cards; students shout the order. Link to balance in nature.</div>
+          <div style="margin-top:12px"><button id="demo90" class="btn">Show 90° steps</button></div>
+          <hr>
+          <div>
+            <h4>Reflection</h4>
+            <p class="small">How does rotational symmetry show balance in creation? Close with dua.</p>
+          </div>
+        </aside>
+      </div>`;
+    }
+
+    function createDay2(){
+      return `
+      <div class="grid2">
+        <div>
+          <div class="number-card">Identifying & Classifying Quadrilaterals</div>
+          <div class="small" style="margin-top:8px">Click a shape to view properties; match properties to identify shapes.</div>
+
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="chip shapeBtn" data-shape="square">Square</button>
+            <button class="chip shapeBtn" data-shape="rectangle">Rectangle</button>
+            <button class="chip shapeBtn" data-shape="rhombus">Rhombus</button>
+            <button class="chip shapeBtn" data-shape="parallelogram">Parallelogram</button>
+            <button class="chip shapeBtn" data-shape="trapezium">Trapezium</button>
+            <button class="chip shapeBtn" data-shape="kite">Kite</button>
+          </div>
+
+          <div style="margin-top:12px">
+            <canvas id="quadCanvas" width="520" height="260"></canvas>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+              <button id="showProps" class="btn primary">Show Properties</button>
+              <button id="quizQuad" class="btn">Start Quiz</button>
+            </div>
+            <div id="propFB" style="margin-top:8px"></div>
+          </div>
+
+          <hr style="margin:12px 0">
+          <div>
+            <h4>Independent Task</h4>
+            <div class="small">Fill the table: sides, parallel sides, symmetry, diagonals.</div>
+            <label>Which shapes have equal diagonals? <input id="diagQ" placeholder="e.g., square, rectangle"></label>
+            <div style="margin-top:8px"><button id="checkQuad" class="btn">Check</button><div id="checkQuadFB" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+
+        <aside class="panel" style="min-height:320px">
+          <h3>Teacher Demo</h3>
+          <div class="small">Use colors to compare properties. Challenge: irregular quadrilaterals and diagonal behaviour.</div>
+          <div style="margin-top:12px"><button id="showCompare" class="btn">Compare Square & Rhombus</button></div>
+        </aside>
+      </div>`;
+    }
+
+    function createDay3(){
+      return `
+      <div class="grid2">
+        <div>
+          <div class="number-card">Measuring & Drawing Angles</div>
+          <div class="small" style="margin-top:8px">Use the digital protractor to measure angles drawn on canvas.</div>
+
+          <div style="margin-top:12px">
+            <canvas id="angleCanvas" width="520" height="280"></canvas>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+              <label>Set angle: <input id="angleSet" type="number" value="45" min="0" max="360" style="width:80px"></label>
+              <button id="drawAngle" class="btn primary">Draw</button>
+              <button id="measureAngle" class="btn">Measure</button>
+              <div id="angleFB"></div>
+            </div>
+          </div>
+
+          <hr style="margin:12px 0">
+          <div>
+            <h4>Independent Task</h4>
+            <label>Estimate: is 120° acute/obtuse/right? <input id="est1" placeholder="e.g., obtuse"></label>
+            <div style="margin-top:8px"><button id="checkAngleTask" class="btn">Check</button><div id="angleTaskFB" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+
+        <aside class="panel" style="min-height:320px">
+          <h3>Teacher prompts</h3>
+          <div class="small">Discuss reflex angles and angle sums; use real objects around class for Angle Hunt.</div>
+          <div style="margin-top:12px"><button id="examplesAngles" class="btn">Show Examples</button><div id="examplesAnglesFB" style="margin-top:8px"></div></div>
+        </aside>
+      </div>`;
+    }
+
+    function createDay4(){
+      return `
+      <div class="grid2">
+        <div>
+          <div class="number-card">Angles in Triangles & Problem Solving</div>
+          <div class="small" style="margin-top:8px">Use triangle builder to explore angle sums and solve missing-angle problems.</div>
+
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+            <label>Angle A: <input id="angA" type="number" value="60" style="width:80px"></label>
+            <label>Angle B: <input id="angB" type="number" value="80" style="width:80px"></label>
+            <button id="calcC" class="btn primary">Find Angle C</button>
+            <div id="angC" style="font-weight:700;margin-left:8px"></div>
+          </div>
+
+          <div style="margin-top:12px">
+            <canvas id="triCanvas" width="520" height="260"></canvas>
+            <div style="margin-top:8px"><button id="showTriangle" class="btn">Draw Triangle</button></div>
+          </div>
+
+          <hr style="margin:12px 0">
+          <div>
+            <h4>Independent Task</h4>
+            <label>Word problem: One angle = 60°, another = 80° → third = <input id="wpAns" style="width:80px"></label>
+            <div style="margin-top:8px"><button id="checkWP" class="btn">Check</button><div id="wpFB" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+
+        <aside class="panel" style="min-height:320px">
+          <h3>Extension</h3>
+          <div class="small">Create triangle puzzles and solve multi-step problems. Connect to natural structures (honeycombs, leaf angles).</div>
+          <div style="margin-top:12px"><button id="showProof" class="btn">Show 180° proof</button><div id="proofFB" style="margin-top:8px"></div></div>
+        </aside>
+      </div>`;
+    }
+
+    function render(){
+      if(state.day===1) dayContent.innerHTML = createDay1();
+      if(state.day===2) dayContent.innerHTML = createDay2();
+      if(state.day===3) dayContent.innerHTML = createDay3();
+      if(state.day===4) dayContent.innerHTML = createDay4();
+      attachHandlers();
+    }
+
+    // Drawing helpers
+    function drawShape(ctx,type,w,h,rot=0){ ctx.save(); ctx.clearRect(0,0,w,h); ctx.translate(w/2,h/2); ctx.rotate(rot); ctx.fillStyle='#eef9f8'; ctx.strokeStyle='#0f172a'; ctx.lineWidth=2; ctx.beginPath();
+      if(type==='square'){ const s=80; ctx.rect(-s/2,-s/2,s,s); }
+      if(type==='rectangle'){ ctx.rect(-120,-60,240,120); }
+      if(type==='equilateral'){ const r=90; for(let i=0;i<3;i++){ const a = -Math.PI/2 + i*(2*Math.PI/3); const x=r*Math.cos(a), y=r*Math.sin(a); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);} }
+      if(type==='regularPentagon'){ const r=70; for(let i=0;i<5;i++){ const a = -Math.PI/2 + i*(2*Math.PI/5); const x=r*Math.cos(a), y=r*Math.sin(a); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);} }
+      if(type==='star'){ const r=70,R=140; for(let i=0;i<5;i++){ const a1=-Math.PI/2 + i*(2*Math.PI/5); const a2=a1+(Math.PI/5); const x1=r*Math.cos(a1), y1=r*Math.sin(a1); const x2=R*Math.cos(a2), y2=R*Math.sin(a2); if(i===0) ctx.moveTo(x2,y2); ctx.lineTo(x1,y1); ctx.lineTo(x2,y2);} }
+      ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); }
+
+    // Angle draw
+    function drawAngle(ctx,w,h,deg){ ctx.clearRect(0,0,w,h); ctx.translate(0,0); const cx=100, cy=160; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+120,cy); ctx.arc(cx,cy,120,0,deg*Math.PI/180); ctx.strokeStyle='#0f172a'; ctx.lineWidth=3; ctx.stroke(); // mark rays
+      // draw protractor-like ticks
+      ctx.beginPath(); for(let a=0;a<=deg;a+=5){ const rad=a*Math.PI/180; const x=cx+120*Math.cos(rad); const y=cy+120*Math.sin(rad); ctx.moveTo(x,y); ctx.lineTo(cx+110*Math.cos(rad),cy+110*Math.sin(rad)); } ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1; ctx.stroke(); }
+
+    function attachHandlers(){
+      $$('.day-btn').forEach(b=>b.addEventListener('click', ()=>{ $$('.day-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); state.day=Number(b.dataset.day); render(); }));
+      $('#speed')?.addEventListener('input', e=>{ state.speed = Number(e.target.value); });
+      $('#reset')?.addEventListener('click', ()=>{ state.speed=1; $('#speed').value=1; render(); });
+
+      if(state.day===1){
+        const canvas = $('#rotCanvas'); const ctx=canvas.getContext('2d'); let anim=null; let angle=0; let currentType='square'; let order=null;
+        function draw(){ drawShape(ctx,currentType,canvas.width,canvas.height,angle*Math.PI/180); }
+        draw();
+        $('#startRotate').addEventListener('click', ()=>{ currentType=$('#shapeSelect').value; angle=0; draw(); if(anim) cancelAnimationFrame(anim); function loop(){ angle += (1*state.speed); draw(); anim = requestAnimationFrame(loop); } loop(); });
+        $('#stopRotate').addEventListener('click', ()=>{ if(anim) cancelAnimationFrame(anim); anim=null; });
+        $('#submitGuess').addEventListener('click', ()=>{
+          const guess = Number($('#orderGuess').value); // compute true order (simple detection)
+          // basic mapping for regular shapes
+          const map = {square:4, rectangle:2,equilateral:3,regularPentagon:5,star:5}; const trueOrder = map[$('#shapeSelect').value]||1;
+          const fb = $('#orderFB'); if(guess===trueOrder) fb.innerHTML='<span class="result correct">Correct!</span>'; else fb.innerHTML=`<span class="result wrong">Not quite — correct order is ${trueOrder}.</span>`;
+        });
+        $('#recordBtn').addEventListener('click', ()=>{ const shp=$('#shapeSelect').value; const map={square:4,rectangle:2,equilateral:3,regularPentagon:5,star:5}; const ord=map[shp]||1; $('#recShape').textContent=shp; $('#recOrder').textContent=ord; $('#recAngle').textContent=(360/ord)+'°'; $('#recFB').innerHTML='<div class="result correct">Recorded.</div>'; });
+        $('#demo90').addEventListener('click', ()=>{ alert('90° steps are useful for shapes with order 4 (e.g., square) — each rotation is 90° = 360° ÷ 4.'); });
+      }
+
+      if(state.day===2){
+        const ctx = $('#quadCanvas').getContext('2d'); function drawQuad(name){ ctx.clearRect(0,0,520,260); ctx.strokeStyle='#0f172a'; ctx.fillStyle='#eef9f8'; ctx.lineWidth=2; ctx.beginPath(); if(name==='square'){ ctx.rect(160,60,120,120);} if(name==='rectangle'){ ctx.rect(140,70,220,100);} if(name==='rhombus'){ ctx.moveTo(260,40); ctx.lineTo(360,130); ctx.lineTo(260,220); ctx.lineTo(160,130);} if(name==='parallelogram'){ ctx.moveTo(160,60); ctx.lineTo(320,60); ctx.lineTo(380,200); ctx.lineTo(220,200);} if(name==='trapezium'){ ctx.moveTo(180,80); ctx.lineTo(340,80); ctx.lineTo(300,200); ctx.lineTo(220,200);} if(name==='kite'){ ctx.moveTo(260,40); ctx.lineTo(330,140); ctx.lineTo(260,220); ctx.lineTo(190,140);} ctx.closePath(); ctx.fill(); ctx.stroke(); }
+        drawQuad('square');
+        $$('.shapeBtn').forEach(b=>b.addEventListener('click', ()=>{ $$('.shapeBtn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); drawQuad(b.dataset.shape); $('#propFB').innerHTML=''; }));
+        $('#showProps').addEventListener('click', ()=>{
+          const active = $$('.shapeBtn').find(x=>x.classList.contains('active'))?.dataset.shape || 'square'; const props = {
+            square: '4 equal sides, 4 right angles, 2 pairs of equal diagonals (bisect), 4 lines of symmetry',
+            rectangle: 'Opposite sides equal, 4 right angles, diagonals equal, 2 lines of symmetry',
+            rhombus: '4 equal sides, opposite angles equal, diagonals bisect at right angles, 2 lines symmetry if square',
+            parallelogram: 'Opposite sides parallel & equal, opposite angles equal, diagonals bisect each other',
+            trapezium: 'One pair of parallel sides, diagonals are not equal generally',
+            kite: 'Two pairs of adjacent equal sides, one diagonal bisects the other'
+          };
+          $('#propFB').innerHTML = `<div class="small">${props[active]}</div>`;
+        });
+        $('#quizQuad').addEventListener('click', ()=>{
+          const questions = [ {q:'Which has 4 equal sides and 4 right angles?',a:'square'}, {q:'Which has one pair of parallel sides?',a:'trapezium'}, {q:'Which has diagonals that are equal?',a:'rectangle'} ]; const pick = questions[Math.floor(Math.random()*questions.length)]; const ans = prompt(pick.q); if(ans && ans.toLowerCase().includes(pick.a)) alert('Correct'); else alert('Try again — answer: '+pick.a);
+        });
+        $('#checkQuad').addEventListener('click', ()=>{ const ans = $('#diagQ').value.toLowerCase(); const ok = ans.includes('square') || ans.includes('rectangle'); $('#checkQuadFB').innerHTML = ok?'<div class="result correct">Right — square and rectangle have equal diagonals.</div>':'<div class="result wrong">Check: square and rectangle have equal diagonals.</div>'; });
+        $('#showCompare').addEventListener('click', ()=>{ alert('Square vs Rhombus: both have 4 equal sides but square has right angles; diagonals in square are equal and bisect at right angles in rhombus.'); });
+      }
+
+      if(state.day===3){
+        const canvas = $('#angleCanvas'); const ctx = canvas.getContext('2d'); function clear(){ ctx.clearRect(0,0,canvas.width,canvas.height); }
+        function draw(deg){ clear(); ctx.save(); ctx.translate(100,160); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(120,0); ctx.arc(0,0,120,0,deg*Math.PI/180); ctx.strokeStyle='#0f172a'; ctx.lineWidth=3; ctx.stroke(); ctx.restore(); }
+        draw(45);
+        $('#drawAngle').addEventListener('click', ()=>{ const deg = Number($('#angleSet').value)||0; draw(deg); $('#angleFB').innerHTML=''; });
+        $('#measureAngle').addEventListener('click', ()=>{ const deg = Number($('#angleSet').value)||0; $('#angleFB').innerHTML = `<span class="result correct">Measured: ${deg}°</span>`; });
+        $('#checkAngleTask').addEventListener('click', ()=>{ const ans = $('#est1').value.trim().toLowerCase(); const ok = ans.includes('obtuse'); $('#angleTaskFB').innerHTML = ok?'<div class="result correct">Correct — 120° is obtuse.</div>':'<div class="result wrong">120° is obtuse (between 90° and 180°).</div>'; });
+        $('#examplesAngles').addEventListener('click', ()=>{ $('#examplesAnglesFB').innerHTML = '<div class="small">Examples: acute(45°), right(90°), obtuse(120°), reflex(270°)</div>'; });
+      }
+
+      if(state.day===4){
+        const canvas = $('#triCanvas'); const ctx = canvas.getContext('2d'); function drawTriangle(A,B,C){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#eef9f8'; ctx.strokeStyle='#0f172a'; ctx.lineWidth=2; // simple visualization: draw triangle with angles proportion
+          const s = 120; const x1=100,y1=180; const x2=420,y2=180; // base
+          // compute third point using angles roughly (for display only)
+          const angA = A*Math.PI/180; const angB = B*Math.PI/180; const angC = C*Math.PI/180;
+          const h = 150; const x3 = 260, y3 = 180 - h*(Math.sin(angA)/Math.sin(angB+angC)); ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle='#0f172a'; ctx.fillText('A:'+A+'°',x1+10,y1-10); ctx.fillText('B:'+B+'°',x2-40,y2-10); ctx.fillText('C:'+C+'°',x3-10,y3-10);
+        }
+        $('#calcC').addEventListener('click', ()=>{ const A = Number($('#angA').value)||0; const B = Number($('#angB').value)||0; const C = 180 - A - B; $('#angC').textContent = C+'°'; drawTriangle(A,B,C); });
+        $('#showTriangle').addEventListener('click', ()=>{ const A = Number($('#angA').value)||0; const B = Number($('#angB').value)||0; const C = 180 - A - B; drawTriangle(A,B,C); });
+        $('#checkWP').addEventListener('click', ()=>{ const ans = Number($('#wpAns').value); const A = Number($('#angA').value)||0; const B = Number($('#angB').value)||0; const C = 180 - A - B; $('#wpFB').innerHTML = (ans===C)?'<div class="result correct">Correct!</div>':'<div class="result wrong">Incorrect — third angle is '+C+'°</div>'; });
+        $('#showProof').addEventListener('click', ()=>{ $('#proofFB').innerHTML = '<div class="small">Proof idea: Cut the three angles and place them along a straight line — they fill 180°.</div>'; });
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>

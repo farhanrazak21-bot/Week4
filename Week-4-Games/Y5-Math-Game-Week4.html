@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Year 5 — Decimals Interactive</title>
+  <style>
+    :root{--bg:#f7fbff;--card:#ffffff;--muted:#6b7280;--accent:#071029;--brand:#0ea5a3}
+    *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial}
+    body{margin:0;background:linear-gradient(180deg,#f8fafc,#eef7f6);color:var(--accent)}
+    header{padding:18px 22px;display:flex;align-items:center;gap:14px}
+    h1{font-size:20px;margin:0}
+    .container{max-width:1100px;margin:12px auto;padding:14px}
+    .panel{background:var(--card);border-radius:12px;box-shadow:0 6px 18px rgba(7,16,41,0.06);padding:16px;margin-bottom:14px}
+    .days{display:flex;gap:8px;flex-wrap:wrap}
+    .day-btn{padding:8px 12px;border-radius:10px;border:1px solid transparent;cursor:pointer;background:#e6f7f6}
+    .day-btn.active{background:var(--brand);color:white}
+    .grid2{display:grid;grid-template-columns:1fr 380px;gap:12px}
+    .number-card{background:#fbfdfe;border-radius:10px;padding:14px;text-align:center;font-weight:700;font-size:26px}
+    .small{font-size:13px;color:var(--muted)}
+    .chip{padding:8px 12px;border-radius:999px;background:#f1f5f9;border:1px solid #e2e8f0;cursor:pointer;margin:4px}
+    .result{padding:10px;border-radius:8px}
+    .correct{background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46}
+    .wrong{background:#fff1f2;border:1px solid #fecaca;color:#7f1d1d}
+    input[type=number], input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid #d1d5db}
+    button.btn{padding:8px 12px;border-radius:10px;border:0;cursor:pointer}
+    .btn.primary{background:var(--brand);color:white}
+    .droplet{width:48px;height:72px;margin:6px auto;position:relative}
+    .drop{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#0ea5a3,#0284c7);position:absolute;left:50%;transform:translateX(-50%);animation:fall 2s linear infinite}
+    .drop:nth-child(2){animation-delay:0.4s}
+    .drop:nth-child(3){animation-delay:0.8s}
+    @keyframes fall{0%{top:-10px;opacity:0}30%{opacity:1}100%{top:56px;opacity:1}}
+    .decimal-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;margin-top:8px}
+    .cell{width:26px;height:26px;background:#fff;border:1px solid #e6eef2;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px}
+    .highlight{background:linear-gradient(90deg,#bff0ea,#c7f6ff)}
+    .numberline{height:60px;position:relative;margin-top:8px}
+    .tick{position:absolute;width:1px;height:12px;background:#cbd5e1;top:28px}
+    .tickLabel{position:absolute;top:40px;font-size:12px}
+    @media (max-width:900px){.grid2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0ea5a3,#0284c7);display:flex;align-items:center;justify-content:center;color:white;font-weight:700">Y5</div>
+    <div>
+      <h1>Decimals — Interactive Games (Year 5)</h1>
+      <div class="small">Four lesson-days: Place Value, Composing/Regrouping, Rounding, Real-life Eco Challenge</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div>
+          <div class="small">Begin each lesson with a short dua.</div>
+          <strong>Connect to Islamic & Eco reflections</strong>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <label class="small">Max decimals places: <select id="places"><option>2</option><option selected>3</option></select></label>
+          <button id="reset" class="btn">Reset</button>
+        </div>
+      </div>
+      <div style="margin-top:12px" class="days">
+        <button class="day-btn active" data-day="1">Day 1 — Place Value</button>
+        <button class="day-btn" data-day="2">Day 2 — Compose & Regroup</button>
+        <button class="day-btn" data-day="3">Day 3 — Rounding</button>
+        <button class="day-btn" data-day="4">Day 4 — Eco Challenge</button>
+      </div>
+    </section>
+
+    <section id="dayContent" class="panel"></section>
+
+    <section class="panel">
+      <h3>Teacher notes & plenary prompts</h3>
+      <ul class="small">
+        <li>Use decimal grids and base-10 models for visual learners.</li>
+        <li>More able students: extend to thousandths and conversion to fractions.</li>
+        <li>Less able: focus on tenths only, use color-coded grids and manipulatives.</li>
+        <li>Reflection prompts: gratitude for small blessings; how small parts build up to a whole.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const $ = (s, ctx=document)=>ctx.querySelector(s);
+    const $$ = (s, ctx=document)=>Array.from((ctx||document).querySelectorAll(s));
+    const state = {day:1, places:3};
+    const dayContent = $('#dayContent');
+
+    function createDay1(){
+      return `
+      <div class="grid2">
+        <div>
+          <div class="number-card">Understanding Decimal Place Value</div>
+          <div style="margin-top:8px" class="small">Water droplet animation: each drop = 0.1 L. How many drops to fill 1 L?</div>
+
+          <div style="display:flex;gap:12px;margin-top:12px;align-items:center">
+            <div class="droplet">
+              <div class="drop"></div>
+              <div class="drop"></div>
+              <div class="drop"></div>
+            </div>
+            <div>
+              <div class="small">Enter a decimal (e.g., 1.23)</div>
+              <input id="decInput" type="text" value="1.23">
+              <div style="margin-top:8px"><button id="showPlace" class="btn primary">Show place values</button></div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <strong>Place value chart</strong>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <div style="min-width:140px;text-align:center"><div class="small">Ones</div><div class="cell" style="display:inline-block;margin-top:8px;width:60px;height:40px;line-height:40px;font-size:16px" id="onesCell">1</div></div>
+              <div style="flex:1">
+                <div class="small">Tenths & Hundredths grid</div>
+                <div id="gridContainer" style="margin-top:8px"></div>
+              </div>
+            </div>
+          </div>
+
+          <hr style="margin:12px 0">
+          <div>
+            <h4>Independent Task</h4>
+            <label>What digit is in the tenths place? <input id="q1" placeholder="e.g., 2"></label>
+            <label>Write 1.23 in expanded form <input id="q2" placeholder="e.g., 1 + 0.2 + 0.03"></label>
+            <div style="margin-top:8px"><button id="checkDay1" class="btn">Check</button><div id="fb1" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+
+        <aside class="panel" style="min-height:320px">
+          <h3>Teacher demo</h3>
+          <div class="small">Use the grid to highlight tenths/hundredths. Connect decimals to fractions: 0.25 = 1/4.</div>
+          <div style="margin-top:12px"><button id="fillGrid" class="btn primary">Fill example: 0.25</button></div>
+
+          <hr>
+          <div>
+            <h4>Reflection</h4>
+            <p class="small">How do small drops remind us of small blessings? Close with dua.</p>
+          </div>
+        </aside>
+      </div>`;
+    }
+
+    function createDay2(){
+      return `
+      <div class="grid2">
+        <div>
+          <div class="number-card">Composing, Decomposing & Regrouping Decimals</div>
+          <div class="small" style="margin-top:8px">Use block visuals to combine tenths into wholes and regroup when needed.</div>
+
+          <div style="margin-top:12px">
+            <label>Enter two decimals to add (e.g., 0.75, 0.25)</label>
+            <div style="display:flex;gap:8px;margin-top:8px"><input id="a1" value="0.75"><input id="b1" value="0.25"><button id="addDec" class="btn primary">Add</button></div>
+            <div id="addResult" style="margin-top:8px"></div>
+          </div>
+
+          <hr style="margin:12px 0">
+          <div>
+            <h4>Independent Task</h4>
+            <label>Decompose 1.2 into 10 tenths: <input id="decQ" placeholder="e.g., 1 + 0.2"></label>
+            <div style="margin-top:8px"><button id="checkDay2" class="btn">Check</button><div id="fb2" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+
+        <aside class="panel" style="min-height:320px">
+          <h3>Visual blocks</h3>
+          <div class="small">Click to add tenths; when you reach 10 tenths, they regroup into 1 ones block.</div>
+          <div style="margin-top:8px"><button id="addTenth" class="btn">Add tenth</button> <button id="resetBlocks" class="btn">Reset</button></div>
+          <div style="margin-top:10px"><div class="small">Blocks:</div><div id="blocks" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div></div>
+
+          <hr>
+          <div>
+            <h4>Reflection</h4>
+            <p class="small">How did regrouping help? Link to teamwork — small pieces create a whole.</p>
+          </div>
+        </aside>
+      </div>`;
+    }
+
+    function createDay3(){
+      return `
+      <div class="grid2">
+        <div>
+          <div class="number-card">Rounding Decimals to Nearest Whole</div>
+          <div class="small" style="margin-top:8px">Use a slope/number-line concept to decide rounding up or down.</div>
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+            <input id="roundInput" value="2.4"><button id="roundBtn" class="btn primary">Round</button>
+            <div id="roundOutput" style="margin-left:8px;font-weight:700"></div>
+          </div>
+
+          <div style="margin-top:12px">
+            <div class="numberline" id="numline"></div>
+            <div style="margin-top:8px"><button id="showHalfRule" class="btn">Show 0.5 rule</button></div>
+          </div>
+
+          <hr style="margin:12px 0">
+          <div>
+            <h4>Independent Task</h4>
+            <label>Round 2.6 → <input id="rq1" placeholder="e.g., 3"></label>
+            <div style="margin-top:8px"><button id="checkDay3" class="btn">Check</button><div id="fb3" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+
+        <aside class="panel" style="min-height:320px">
+          <h3>Teacher prompts</h3>
+          <div class="small">Discuss why we round up from .5 and above. Connect to contentment (qana'ah).</div>
+          <div style="margin-top:12px"><button id="examplesRound" class="btn">Show examples</button><div id="examplesList" style="margin-top:8px"></div></div>
+        </aside>
+      </div>`;
+    }
+
+    function createDay4(){
+      return `
+      <div class="grid2">
+        <div>
+          <div class="number-card">Eco Decimal Challenge — Real-Life Application</div>
+          <div class="small" style="margin-top:8px">Groups record eco-data, round and regroup to show whole + fractional parts.</div>
+
+          <div style="margin-top:12px">
+            <label>Enter rainfall (cm), water used (L), sunlight (h) as decimals:</label>
+            <div style="display:flex;gap:8px;margin-top:8px"><input id="eco1" placeholder="2.6"><input id="eco2" placeholder="1.45"><input id="eco3" placeholder="5.8"><button id="processEco" class="btn primary">Process</button></div>
+            <div id="ecoResults" style="margin-top:8px"></div>
+          </div>
+
+          <hr style="margin:12px 0">
+          <div>
+            <h4>Storyboard</h4>
+            <label>Create a short decimal story: <input id="story" placeholder="e.g., Group A saved 1.45 L..."></label>
+            <div style="margin-top:8px"><button id="saveStory" class="btn">Save Story</button><div id="storyFB" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+
+        <aside class="panel" style="min-height:320px">
+          <h3>Guidance & Rubric</h3>
+          <div class="small">Check for correct rounding, regrouping, and clear eco connection in presentations.</div>
+          <div style="margin-top:12px"><button id="showRubric" class="btn">Show Quick Rubric</button><div id="rubric" + "" style="margin-top:8px"></div></div>
+        </aside>
+      </div>`;
+    }
+
+    function render(){
+      if(state.day===1) dayContent.innerHTML = createDay1();
+      if(state.day===2) dayContent.innerHTML = createDay2();
+      if(state.day===3) dayContent.innerHTML = createDay3();
+      if(state.day===4) dayContent.innerHTML = createDay4();
+      attachHandlers();
+    }
+
+    function attachHandlers(){
+      $$('.day-btn').forEach(b=>b.addEventListener('click', ()=>{ $$('.day-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); state.day=Number(b.dataset.day); render(); }));
+      $('#places').addEventListener('change', e=>{ state.places = Number(e.target.value); });
+      $('#reset').addEventListener('click', ()=>{ state.places=3; $('#places').value='3'; render(); });
+
+      if(state.day===1){
+        $('#showPlace').addEventListener('click', ()=>{
+          const val = $('#decInput').value.trim(); const n = Number(val);
+          if(isNaN(n)){ $('#fb1').innerHTML = '<div class="result wrong">Please enter a valid decimal.</div>'; return; }
+          const parts = val.split('.'); const ones = parts[0] || '0'; const dec = parts[1] || '';
+          $('#onesCell').textContent = ones;
+          const container = $('#gridContainer'); container.innerHTML='';
+          const t = dec.slice(0,10).padEnd(2,'0'); // show two places by default
+          const grid = document.createElement('div'); grid.className='decimal-grid';
+          for(let i=0;i<10;i++){ const c=document.createElement('div'); c.className='cell'; if(i< (dec[0]?Number(dec[0]):0)) c.classList.add('highlight'); c.textContent = i+1; grid.appendChild(c); }
+          container.appendChild(grid);
+
+          $('#fb1').innerHTML = `<div class="result correct">Ones: ${ones} — Tenths: ${dec[0]||0} — Hundredths: ${dec[1]||0}</div>`;
+        });
+
+        $('#fillGrid').addEventListener('click', ()=>{ $('#decInput').value='0.25'; $('#showPlace').click(); });
+
+        $('#checkDay1').addEventListener('click', ()=>{
+          const q1 = $('#q1').value.trim(); const q2 = $('#q2').value.trim().toLowerCase();
+          const ok1 = q1==='2'; const ok2 = q2.includes('1') && q2.includes('0.2');
+          $('#fb1').innerHTML = (ok1 && ok2)?'<div class="result correct">Good — both correct</div>':'<div class="result wrong">Check tenths or expanded form</div>';
+        });
+      }
+
+      if(state.day===2){
+        let tenthsCount = 0;
+        $('#addDec').addEventListener('click', ()=>{
+          const a = Number($('#a1').value)||0; const b = Number($('#b1').value)||0; const sum = +(a+b).toFixed(state.places);
+          $('#addResult').innerHTML = `<div class="result">${a} + ${b} = <strong>${sum}</strong></div>`;
+        });
+
+        $('#addTenth').addEventListener('click', ()=>{
+          tenthsCount++; const blocks = $('#blocks'); const el = document.createElement('div'); el.className='chip'; el.textContent='0.1'; blocks.appendChild(el);
+          if(tenthsCount>=10){ // regroup
+            tenthsCount -=10; // remove 10 chips
+            for(let i=0;i<10;i++) if(blocks.firstChild) blocks.removeChild(blocks.firstChild);
+            const one = document.createElement('div'); one.className='chip'; one.textContent='1.0 (regrouped)'; blocks.appendChild(one);
+          }
+        });
+        $('#resetBlocks').addEventListener('click', ()=>{ tenthsCount=0; $('#blocks').innerHTML=''; });
+
+        $('#checkDay2').addEventListener('click', ()=>{
+          const ans = $('#decQ').value.trim(); $('#fb2').innerHTML = ans?'<div class="result correct">Recorded — discuss as class.</div>':'<div class="result wrong">Please enter decomposition.</div>';
+        });
+      }
+
+      if(state.day===3){
+        function drawNumberLine(center){ const line = $('#numline'); line.innerHTML=''; const start = Math.floor(center)-2; for(let i=0;i<=4;i++){ const x = (i/4)*100; const val = start+i; const tick = document.createElement('div'); tick.className='tick'; tick.style.left=(x)+'%'; line.appendChild(tick); const lbl = document.createElement('div'); lbl.className='tickLabel'; lbl.style.left=(x)+'%'; lbl.style.transform='translateX(-50%)'; lbl.textContent = val; line.appendChild(lbl); }
+        }
+        $('#roundBtn').addEventListener('click', ()=>{
+          const n = Number($('#roundInput').value); if(isNaN(n)){ $('#roundOutput').textContent='?'; return; }
+          const rounded = Math.round(n); $('#roundOutput').textContent = rounded; drawNumberLine(n);
+        });
+        $('#showHalfRule').addEventListener('click', ()=>{ alert('Halfway rule: if decimal part is 0.5 or greater, round up. Otherwise round down.'); });
+        $('#checkDay3').addEventListener('click', ()=>{ const ans = $('#rq1').value.trim(); $('#fb3').innerHTML = ans?'<div class="result correct">Good — discuss.</div>':'<div class="result wrong">Answer missing.</div>'; });
+        $('#examplesRound').addEventListener('click', ()=>{ $('#examplesList').innerHTML = '<div class="small">Examples: 2.4 → 2, 2.5 → 3, 2.49 → 2</div>'; });
+      }
+
+      if(state.day===4){
+        $('#processEco').addEventListener('click', ()=>{
+          const v1 = Number($('#eco1').value)||0; const v2 = Number($('#eco2').value)||0; const v3 = Number($('#eco3').value)||0;
+          const rounded1 = Math.round(v1); const rounded2 = Math.round(v2); const rounded3 = Math.round(v3);
+          $('#ecoResults').innerHTML = `<div class="small">Rainfall ${v1} → ${rounded1} cm (nearest whole) <br>Water ${v2} L → ${rounded2} L <br>Sunlight ${v3} h → ${rounded3} h</div>`;
+        });
+        $('#saveStory').addEventListener('click', ()=>{ const s = $('#story').value.trim(); $('#storyFB').innerHTML = s?'<div class="result correct">Story saved — nice connection to eco-data.</div>':'<div class="result wrong">Please write a short story.</div>'; });
+        $('#showRubric').addEventListener('click', ()=>{ $('#rubric').innerHTML = '<div class="small">Rubric: Accuracy (40%), Presentation (30%), Eco link (30%)</div>'; });
+      }
+    }
+
+    // init
+    render();
+  </script>
+</body>
+</html>

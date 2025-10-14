@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Year 5 Science — Seed Dispersal Interactive (Intro Click Fix)</title>
+<style>
+  :root{--bg:#fbfff9;--card:#fff;--muted:#556;--accent:#0b486b;--brand:#0ea5a3}
+  *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system,'Segoe UI',Roboto,Arial}
+  body{margin:0;background:linear-gradient(180deg,#f8fff7,#eefbf9);color:var(--accent)}
+  header{display:flex;align-items:center;gap:12px;padding:14px}
+  h1{margin:0;font-size:18px}
+  .container{max-width:1100px;margin:12px auto;padding:12px}
+  .panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(6,72,80,0.06);margin-bottom:12px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border-radius:8px;background:#eafdfb;cursor:pointer;border:1px solid rgba(14,165,163,0.07)}
+  .tab.active{background:var(--brand);color:white}
+  .row{display:flex;gap:12px;align-items:flex-start}
+  .col{flex:1}
+  .card{background:#fff;border-radius:10px;padding:12px;border:1px solid #e6f7f6}
+  .small{font-size:13px;color:var(--muted)}
+  button{padding:8px 10px;border-radius:8px;border:0;background:var(--brand);color:white;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid #cfeeea;color:var(--accent)}
+  .list{display:flex;gap:8px;flex-wrap:wrap}
+  .flash{cursor:pointer;padding:12px;border-radius:8px;background:#fff;border:1px solid #e6f3f3;min-width:160px;text-align:center;user-select:none}
+  .flash .front{font-weight:700}
+  .flash .back{display:none;margin-top:8px;color:var(--muted)}
+  .flash.revealed .back{display:block}
+  .dropzone{min-height:60px;padding:8px;border-radius:8px;border:2px dashed #d6f7f2;background:#fbfffe}
+  .result{margin-top:8px;padding:8px;border-radius:8px}
+  .correct{background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46}
+  .wrong{background:#fff1f2;border:1px solid #fecaca;color:#7f1d1d}
+  table{width:100%;border-collapse:collapse}
+  td,th{border:1px solid #eef7f6;padding:6px;text-align:left}
+  input,select,textarea{padding:6px;border-radius:6px;border:1px solid #dbeeea}
+  @media (max-width:900px){.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+  <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0ea5a3,#0284c7);display:flex;align-items:center;justify-content:center;color:white;font-weight:800">Y5</div>
+  <div>
+    <h1>Year 5 Science — Seed Dispersal Interactive</h1>
+    <div class="small">Fixed Intro: seed cards now reliably reveal methods when clicked (robust delegation & clear DOM structure).</div>
+  </div>
+</header>
+<main class="container">
+  <section class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="small">Open each day tab; every button is clickable and interactive. No alerts; in-page feedback only.</div>
+      <div>
+        <label class="small">Mode: <select id="mode"><option>Group</option><option>Independent</option></select></label>
+        <button id="resetAll" class="ghost">Reset All</button>
+      </div>
+    </div>
+    <div style="margin-top:12px" class="tabs">
+      <div class="tab active" data-day="1">Day 1 — Intro & Quiz</div>
+      <div class="tab" data-day="2">Day 2 — Sorting Game</div>
+      <div class="tab" data-day="3">Day 3 — Garden Collection</div>
+      <div class="tab" data-day="4">Day 4 — Present & Plenary</div>
+    </div>
+  </section>
+
+  <section id="content" class="panel"></section>
+
+  <section class="panel">
+    <h3>Teacher notes</h3>
+    <ul class="small">
+      <li>Designed to run offline in modern browsers. All interactions implemented with robust event handling.</li>
+      <li>Buttons use event delegation where possible so clicks remain active after DOM changes.</li>
+      <li>Validation messages guide teacher/students; use projector for whole-class activities or tablets for groups.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const $=(s,ctx=document)=>ctx.querySelector(s);
+const $$=(s,ctx=document)=>Array.from((ctx||document).querySelectorAll(s));
+let state={day:1};
+const content = $('#content');
+
+const SEED_EXAMPLES = [
+  {id:'dandelion',label:'Dandelion',method:'wind',hint:'fluffy parachute'},
+  {id:'coconut',label:'Coconut',method:'water',hint:'buoyant husk'},
+  {id:'pea',label:'Pea pod',method:'animals',hint:'in pods or eaten by animals'},
+  {id:'mahogany',label:'Mahogany winged seed',method:'wind',hint:'wing helps glide'},
+  {id:'explosive',label:'Balsam (explosive)',method:'explosion',hint:'pod bursts'},
+  {id:'durian',label:'Durian',method:'drop',hint:'heavy falls and may roll'}
+];
+
+function day1(){
+  return `
+  <div class="row">
+    <div class="col card">
+      <h3>Intro: Methods of Seed Dispersal</h3>
+      <p class="small">Five methods: animals, wind, water, explosion, drop & roll. Click any seed card to reveal its likely dispersal method and adaptation.</p>
+      <div style="margin-top:8px" id="seedBank" class="list"></div>
+      <div style="margin-top:12px"><button id="startQuiz" class="btn">Start Quick Quiz</button> <button id="showAll" class="ghost">Show All Answers</button></div>
+      <div id="day1FB" style="margin-top:8px"></div>
+    </div>
+    <div class="col card">
+      <h4 class="small">Islamic & Eco Links</h4>
+      <p class="small">Reflect: Each seed is designed by Allah for a purpose. Caring for plants is our amanah.</p>
+      <div class="small">Plenary question: "What happens if there are fewer animals?" Use quiz feedback to discuss.</div>
+    </div>
+  </div>`;
+}
+
+function day2(){ /* (omitted here for brevity in template) */ return document.getElementById('template-day2')?document.getElementById('template-day2').innerHTML:''; }
+function day3(){ return document.getElementById('template-day3')?document.getElementById('template-day3').innerHTML:''; }
+function day4(){ return document.getElementById('template-day4')?document.getElementById('template-day4').innerHTML:''; }
+
+// small embedded templates for other days to keep file short (these match previous complete version)
+const tplDay2 = `
+<div class="row">
+  <div class="col card">
+    <h3>Sorting Game — Drag & Drop</h3>
+    <p class="small">Drag each seed card to the correct dispersal box.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <div style="flex:1;min-width:180px">
+        <div class="small">Seed cards</div>
+        <div id="sortBank" class="list" style="margin-top:8px"></div>
+      </div>
+      <div style="flex:2;min-width:320px">
+        <div class="small">Drop zones</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <div class="card" style="flex:1;min-width:140px"><strong>Animals</strong><div class="dropzone" data-method="animals" id="dz-animals"></div></div>
+          <div class="card" style="flex:1;min-width:140px"><strong>Wind</strong><div class="dropzone" data-method="wind" id="dz-wind"></div></div>
+          <div class="card" style="flex:1;min-width:140px"><strong>Water</strong><div class="dropzone" data-method="water" id="dz-water"></div></div>
+          <div class="card" style="flex:1;min-width:140px"><strong>Explosion</strong><div class="dropzone" data-method="explosion" id="dz-explosion"></div></div>
+          <div class="card" style="flex:1;min-width:140px"><strong>Drop & Roll</strong><div class="dropzone" data-method="drop" id="dz-drop"></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px"><button id="checkSort" class="btn">Check Sorting</button> <span id="sortFB" style="margin-left:8px"></span></div>
+  </div>
+  <div class="col card">
+    <h4 class="small">Differentiation</h4>
+    <p class="small">Less able: clue hints shown. More able: add two extra examples and explain adaptation.</p>
+  </div>
+</div>`;
+
+const tplDay3 = `
+<div class="row">
+  <div class="col card">
+    <h3>Garden Collection — Data Table</h3>
+    <p class="small">Collect 5 seeds/groups in your garden. Enter each seed, its features and predicted method.</p>
+    <table aria-label="collection table"><thead><tr><th>#</th><th>Seed</th><th>Features</th><th>Predicted Method</th><th>Reason</th></tr></thead><tbody id="collectTable"></tbody></table>
+    <div style="margin-top:8px">Seed name: <input id="colName" placeholder="e.g., dandelion"> Features: <input id="colFeat" placeholder="e.g., fluffy"> Method: <select id="colMethod"><option value="wind">Wind</option><option value="animals">Animals</option><option value="water">Water</option><option value="explosion">Explosion</option><option value="drop">Drop & Roll</option></select> Reason: <input id="colReason" placeholder="Why?"> <button id="addCollect" class="btn">Add</button></div>
+    <div style="margin-top:8px"><button id="exportCSV" class="ghost">Export CSV</button> <span id="collectFB" style="margin-left:8px"></span></div>
+  </div>
+  <div class="col card">
+    <h4 class="small">Teacher guidance</h4>
+    <p class="small">Provide word bank for less able students. More able can suggest multiple dispersal methods for one seed.</p>
+  </div>
+</div>`;
+
+const tplDay4 = `
+<div class="row">
+  <div class="col card">
+    <h3>Present & Plenary</h3>
+    <p class="small">Groups present one seed and explain method + adaptation. Then quick quiz.</p>
+    <div style="margin-top:8px">Presentation notes: <textarea id="presNotes" rows="4" placeholder="Write what you'll present..."></textarea></div>
+    <div style="margin-top:8px"><button id="savePres" class="btn">Save Notes</button> <span id="presFB" style="margin-left:8px"></span></div>
+    <hr>
+    <h4 class="small">Quick Quiz (auto)</h4>
+    <div id="quizArea"></div>
+    <div style="margin-top:8px"><button id="startQuiz2" class="btn">Start Quiz</button> <span id="quizFB2" style="margin-left:8px"></span></div>
+  </div>
+  <div class="col card">
+    <h4 class="small">Reflection</h4>
+    <p class="small">Ask: How does seed dispersal show Allah's wisdom? What can we do to protect seeds and habitats?</p>
+  </div>
+</div>`;
+
+// render
+function render(){
+  if(state.day===1) content.innerHTML = day1();
+  if(state.day===2) content.innerHTML = tplDay2;
+  if(state.day===3) content.innerHTML = tplDay3;
+  if(state.day===4) content.innerHTML = tplDay4;
+  attachHandlers();
+}
+
+function attachHandlers(){
+  $$('.tab').forEach((t,i)=> t.onclick = ()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); state.day = i+1; render(); });
+  $('#resetAll').onclick = ()=> location.reload();
+
+  // DAY 1 handlers
+  if(state.day===1){
+    const bank = $('#seedBank'); bank.innerHTML='';
+    SEED_EXAMPLES.forEach(s=>{
+      const el = document.createElement('div'); el.className='flash'; el.dataset.id = s.id;
+      el.innerHTML = `<div class="front">${s.label}</div><div class="back">Method: <strong>${s.method}</strong><div class="small">Hint: ${s.hint}</div></div>`;
+      bank.appendChild(el);
+    });
+
+    // Delegated click: toggle reveal reliably
+    bank.addEventListener('click', function handler(e){ const card = e.target.closest('.flash'); if(!card) return; card.classList.toggle('revealed'); });
+
+    $('#startQuiz').onclick = ()=>{
+      const qArea = $('#day1FB'); qArea.innerHTML = '';
+      const shuffled = SEED_EXAMPLES.slice().sort(()=>Math.random()-0.5).slice(0,4);
+      shuffled.forEach((q,i)=>{
+        const div = document.createElement('div'); div.className='small';
+        div.innerHTML = `${q.label}: <select data-id='${q.id}' class='quizSel'><option value=''>Choose</option><option value='wind'>Wind</option><option value='water'>Water</option><option value='animals'>Animals</option><option value='explosion'>Explosion</option><option value='drop'>Drop & Roll</option></select>`;
+        qArea.appendChild(div);
+      });
+      const btn = document.createElement('button'); btn.textContent='Check Answers'; btn.className='btn'; btn.onclick = ()=>{
+        const sels = Array.from(document.querySelectorAll('.quizSel')); let correct=0; sels.forEach(s=>{ const id = s.dataset.id; const chosen = s.value; const real = SEED_EXAMPLES.find(x=>x.id===id).method; if(chosen===real) correct++; });
+        qArea.innerHTML += `<div class="result ${correct===sels.length? 'correct':'wrong'}">${correct} / ${sels.length} correct</div>`;
+      };
+      qArea.appendChild(btn);
+    };
+
+    $('#showAll').onclick = ()=>{ $('#day1FB').innerHTML = SEED_EXAMPLES.map(s=>`<div class="small"><strong>${s.label}</strong> — ${s.method} (${s.hint})</div>`).join(''); };
+  }
+
+  // DAY 2 handlers
+  if(state.day===2){
+    const bank = $('#sortBank'); bank.innerHTML='';
+    SEED_EXAMPLES.forEach(s=>{ const c = document.createElement('div'); c.className='flash'; c.draggable=true; c.dataset.id=s.id; c.dataset.method=s.method; c.textContent = s.label; bank.appendChild(c); c.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', JSON.stringify({id:s.id,method:s.method,label:s.label}))); });
+    $$('.dropzone').forEach(dz=>{ dz.innerHTML=''; dz.ondragover = e=> e.preventDefault(); dz.ondrop = e=>{ e.preventDefault(); const data = e.dataTransfer.getData('text/plain'); try{ const obj = JSON.parse(data); const badge = document.createElement('div'); badge.className='flash'; badge.textContent = obj.label; badge.dataset.method = obj.method; dz.appendChild(badge); }catch(err){console.error(err);} }; });
+    $('#checkSort').onclick = ()=>{
+      const placed = [];
+      $$('.dropzone').forEach(dz=>{ const method = dz.dataset.method; Array.from(dz.children).forEach(child=> placed.push({label:child.textContent,method:child.dataset.method,expected:method})); });
+      let correct=0; placed.forEach(p=>{ if(p.method===p.expected) correct++; });
+      const total = SEED_EXAMPLES.length; $('#sortFB').innerHTML = `<div class="result ${correct===total?'correct':'wrong'}">${correct} of ${total} placed correctly.</div>`;
+    };
+  }
+
+  // DAY 3 handlers
+  if(state.day===3){
+    const tbody = $('#collectTable'); tbody.innerHTML=''; let collection = [];
+    $('#addCollect').onclick = ()=>{
+      const name = $('#colName').value.trim(); const feat = $('#colFeat').value.trim(); const method = $('#colMethod').value; const reason = $('#colReason').value.trim(); if(!name||!feat||!reason){ $('#collectFB').innerHTML = '<span class="result wrong">Fill all fields</span>'; return; }
+      collection.push({name,feat,method,reason}); const tr = document.createElement('tr'); tr.innerHTML = `<td>${collection.length}</td><td>${name}</td><td>${feat}</td><td>${method}</td><td>${reason}</td>`; tbody.appendChild(tr); $('#colName').value=''; $('#colFeat').value=''; $('#colReason').value=''; $('#collectFB').innerHTML = '<span class="result correct">Added</span>';
+    };
+    $('#exportCSV').onclick = ()=>{
+      if(collection.length===0){ $('#collectFB').innerHTML = '<span class="result wrong">No data to export</span>'; return; }
+      const header = ['#','Seed','Features','Method','Reason']; const rows = collection.map((r,i)=>[i+1,r.name,r.feat,r.method,r.reason]); const csv = [header].concat(rows).map(r=> r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'); const blob = new Blob([csv],{type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'seed_collection.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); $('#collectFB').innerHTML = '<span class="result correct">CSV exported</span>';
+    };
+  }
+
+  // DAY 4 handlers
+  if(state.day===4){
+    $('#savePres').onclick = ()=>{ const txt = $('#presNotes').value.trim(); if(!txt) { $('#presFB').innerHTML = '<span class="result wrong">Write notes first</span>'; return; } localStorage.setItem('y5_pres', txt); $('#presFB').innerHTML = '<span class="result correct">Notes saved (local)</span>'; };
+    $('#startQuiz2').onclick = ()=>{
+      const area = $('#quizArea'); area.innerHTML = ''; const shuffled = SEED_EXAMPLES.slice().sort(()=>Math.random()-0.5).slice(0,4);
+      shuffled.forEach((q,i)=>{ const div = document.createElement('div'); div.className='small'; div.innerHTML = `${q.label}: <select data-id='${q.id}' class='quiz2Sel'><option value=''>Choose</option><option value='wind'>Wind</option><option value='water'>Water</option><option value='animals'>Animals</option><option value='explosion'>Explosion</option><option value='drop'>Drop & Roll</option></select>`; area.appendChild(div); });
+      const btn = document.createElement('button'); btn.textContent='Check Quiz'; btn.className='btn'; btn.onclick = ()=>{ const sels = Array.from(document.querySelectorAll('.quiz2Sel')); let correct=0; sels.forEach(s=>{ const id = s.dataset.id; const chosen = s.value; const real = SEED_EXAMPLES.find(x=>x.id===id).method; if(chosen===real) correct++; }); $('#quizFB2').innerHTML = `<div class="result ${correct===sels.length?'correct':'wrong'}">${correct} / ${sels.length} correct</div>`; }; area.appendChild(btn);
+    };
+  }
+}
+
+// init
+$$('.tab').forEach((t,i)=> t.addEventListener('click', ()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); state.day = i+1; render(); }));
+$('#resetAll').onclick = ()=> location.reload();
+render();
+</script>
+</body>
+</html>

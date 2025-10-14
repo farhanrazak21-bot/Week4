@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Year 4 Science — Scientific Enquiry & Lab Rules (Clickable Fix)</title>
+<style>
+  :root{--bg:#fbfff9;--card:#ffffff;--muted:#556;--accent:#0b486b;--brand:#0ea5a3}
+  *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system,'Segoe UI',Roboto,Arial}
+  body{margin:0;background:linear-gradient(180deg,#f8fff7,#eefbf9);color:var(--accent)}
+  header{display:flex;align-items:center;gap:12px;padding:14px}
+  h1{margin:0;font-size:18px}
+  .container{max-width:1100px;margin:12px auto;padding:12px}
+  .panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(6,72,80,0.06);margin-bottom:12px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border-radius:8px;background:#eafdfb;cursor:pointer}
+  .tab.active{background:var(--brand);color:white}
+  .row{display:flex;gap:12px;align-items:flex-start}
+  .col{flex:1}
+  .card{background:#fff;border-radius:10px;padding:12px;border:1px solid #e6f7f6}
+  .small{font-size:13px;color:var(--muted)}
+  button{padding:8px 10px;border-radius:8px;border:0;background:var(--brand);color:white;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid #cfeeea;color:var(--accent)}
+  .list{display:flex;gap:8px;flex-wrap:wrap}
+  .badge{padding:8px 10px;border-radius:8px;background:#f0fffb;border:1px solid #d6f7f2}
+  .flash{cursor:pointer;padding:12px;border-radius:8px;background:#fff;border:1px solid #e6f3f3;min-width:120px;text-align:center;user-select:none}
+  .flash .back{display:none;margin-top:6px}
+  .flash.flipped .front{display:none}
+  .flash.flipped .back{display:block}
+  .dropzone{min-height:60px;padding:8px;border-radius:8px;border:2px dashed #d6f7f2;background:#fbfffe}
+  .result{margin-top:8px;padding:8px;border-radius:8px}
+  .correct{background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46}
+  .wrong{background:#fff1f2;border:1px solid #fecaca;color:#7f1d1d}
+  canvas{border-radius:8px;border:1px solid #e6f3f3;background:#fff}
+  input[type=text], select, textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #dbeeea}
+  .selected{outline:3px solid rgba(14,165,163,0.18)}
+  @media (max-width:900px){.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+  <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0ea5a3,#0284c7);display:flex;align-items:center;justify-content:center;color:white;font-weight:800">Y4</div>
+  <div>
+    <h1>Year 4 Science — Scientific Enquiry & Lab Rules</h1>
+    <div class="small">Fixed clickable cards — all flashcards and selection cards use delegation so clicks always work.</div>
+  </div>
+</header>
+<main class="container">
+  <section class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="small">Start with an icebreaker: Silent Line-Up Challenge — use the simulator or run live in class.</div>
+      <div>
+        <label class="small">Mode: <select id="mode"><option>Group</option><option>Independent</option></select></label>
+        <button id="resetAll" class="ghost">Reset All</button>
+      </div>
+    </div>
+    <div style="margin-top:12px" class="tabs">
+      <div class="tab active" data-tab="lineup">Silent Line-Up</div>
+      <div class="tab" data-tab="enquiry">Scientific Enquiry Recall</div>
+      <div class="tab" data-tab="ice">Ice Cube Watch</div>
+      <div class="tab" data-tab="odd">Odd One Out</div>
+      <div class="tab" data-tab="pattern">Pattern Seeking</div>
+      <div class="tab" data-tab="fair">Fair Testing</div>
+      <div class="tab" data-tab="lab">Lab Treasure Hunt</div>
+    </div>
+  </section>
+
+  <section id="content" class="panel"></section>
+
+  <section class="panel">
+    <h3>Teacher notes</h3>
+    <ul class="small">
+      <li>All interactive parts run offline. Use projector for whole-class or small-group stations.</li>
+      <li>More able: extend pattern-seeking and fair testing with extra variables; less able: provide scaffolded worksheets.</li>
+      <li>Safety first: always model lab safety and supervise practical sessions.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const $=(s,ctx=document)=>ctx.querySelector(s);
+const $$=(s,ctx=document)=>Array.from((ctx||document).querySelectorAll(s));
+let state={tab:'lineup'};
+const content = $('#content');
+
+// Utility: create flash card element
+function makeFlash(frontText, backText, key){ const el = document.createElement('div'); el.className='flash'; if(key) el.dataset.key=key; el.innerHTML = `<div class="front">${frontText}</div><div class="back">${backText || ''}</div>`; return el; }
+
+// Render functions
+function renderLineup(){
+  content.innerHTML = `
+  <div class="row">
+    <div class="col card">
+      <h3>Silent Line-Up — Simulator</h3>
+      <p class="small">Choose a category and click Start. Students (cards) will try to arrange themselves silently. Teacher checks order.</p>
+      <div style="margin-top:8px">Category: <select id="lineCat"><option value="height">Height (short → tall)</option><option value="birthday">Birthday month (Jan→Dec)</option><option value="alpha">Alphabetical (first name)</option><option value="shoe">Shoe size (small→big)</option></select>
+      <button id="startLine" style="margin-left:8px">Start</button>
+      <button id="shuffleLine" class="ghost">Shuffle</button>
+      </div>
+      <div style="margin-top:12px" class="small">Click and drag cards to rearrange silently, then click Check to validate.</div>
+      <div style="margin-top:12px" id="cardsArea" class="list" aria-label="students"></div>
+      <div style="margin-top:12px"><button id="checkLine" class="btn">Check</button> <span id="lineFB" style="margin-left:8px"></span></div>
+    </div>
+
+    <div class="col card">
+      <h4 class="small">Instructions for live class</h4>
+      <ol class="small">
+        <li>Teacher gives category and time limit (3–5 minutes).</li>
+        <li>Students arrange themselves silently using gestures.</li>
+        <li>Teacher checks or chooses a student to check the line-up for points.</li>
+      </ol>
+      <div style="margin-top:12px" class="small">Use the simulator to practise or demonstrate before live play.</div>
+    </div>
+  </div>`;
+
+  const sampleStudents = [
+    {name:'Aisha',height:130,month:5,shoe:2},
+    {name:'Bilal',height:120,month:11,shoe:1},
+    {name:'Citra',height:125,month:3,shoe:3},
+    {name:'Daniel',height:135,month:7,shoe:4},
+    {name:'Elif',height:128,month:1,shoe:2}
+  ];
+  const cardsArea = $('#cardsArea');
+  let current = sampleStudents.slice();
+
+  function buildCards(arr){ cardsArea.innerHTML=''; arr.forEach((s,i)=>{ const d = makeFlash(s.name,''); d.draggable=true; d.dataset.index = i; d.dataset.name = s.name; cardsArea.appendChild(d); }); }
+
+  // Delegated drag handling: set dragstart on individual cards
+  cardsArea.addEventListener('dragstart', e=>{
+    const card = e.target.closest('.flash'); if(!card) return; e.dataTransfer.setData('text/plain', card.dataset.index);
+  });
+  cardsArea.addEventListener('dragover', e=>e.preventDefault());
+  cardsArea.addEventListener('drop', e=>{
+    const from = Number(e.dataTransfer.getData('text/plain')); const toElem = e.target.closest('.flash'); if(toElem==null) return; const to = Array.from(cardsArea.children).indexOf(toElem);
+    const item = current.splice(from,1)[0]; current.splice(to,0,item); buildCards(current);
+  });
+
+  buildCards(current);
+
+  $('#shuffleLine').addEventListener('click', ()=>{ for(let i=current.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [current[i],current[j]]=[current[j],current[i]]; } buildCards(current); $('#lineFB').innerHTML = ''; });
+  $('#startLine').addEventListener('click', ()=>{ for(let i=current.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [current[i],current[j]]=[current[j],current[i]]; } buildCards(current); $('#lineFB').textContent = 'Arrange silently (drag) then press Check.'; });
+
+  $('#checkLine').addEventListener('click', ()=>{
+    const cat = $('#lineCat').value; let correctOrder = [];
+    if(cat==='height') correctOrder = current.slice().sort((a,b)=>a.height-b.height).map(s=>s.name);
+    if(cat==='birthday') correctOrder = current.slice().sort((a,b)=>a.month-b.month).map(s=>s.name);
+    if(cat==='alpha') correctOrder = current.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(s=>s.name);
+    if(cat==='shoe') correctOrder = current.slice().sort((a,b)=>a.shoe-b.shoe).map(s=>s.name);
+    const userOrder = Array.from($('#cardsArea').children).map(n=>n.textContent);
+    let correctCount=0; for(let i=0;i<userOrder.length;i++){ if(userOrder[i]===correctOrder[i]) correctCount++; }
+    if(correctCount===userOrder.length) $('#lineFB').innerHTML = '<span class="result correct">Perfect! All in correct order.</span>';
+    else $('#lineFB').innerHTML = `<span class="result wrong">${correctCount} of ${userOrder.length} are in the correct positions.</span>`;
+  });
+}
+
+function renderEnquiry(){
+  content.innerHTML = `
+  <div class="row">
+    <div class="col card">
+      <h3>Scientific Enquiry Recall</h3>
+      <p class="small">Identify the 5 types of scientific enquiries. Click the card that matches the description.</p>
+      <div style="margin-top:8px" id="enqCards" class="list" aria-label="enquiry-cards"></div>
+      <div style="margin-top:12px"><button id="checkEnq" class="btn">Check Answers</button> <span id="enqFB" style="margin-left:8px"></span></div>
+    </div>
+
+    <div class="col card">
+      <h4 class="small">Enquiry types</h4>
+      <ul class="small">
+        <li>Research</li>
+        <li>Fair testing</li>
+        <li>Identifying & classifying</li>
+        <li>Pattern seeking</li>
+        <li>Observing over time</li>
+      </ul>
+      <div class="small" style="margin-top:8px">Use the activities to practise each skill in small groups.</div>
+    </div>
+  </div>`;
+
+  const descriptions = [
+    {id:'research',text:'Use books or internet to find facts (e.g., Who invented the light bulb?)'},
+    {id:'observing',text:'Watch and record changes over time (e.g., ice cube melting).'},
+    {id:'classify',text:'Group objects by features (e.g., odd one out).'},
+    {id:'pattern',text:'Collect data to look for trends (e.g., shoe size vs height).'},
+    {id:'fair',text:'Change one thing and keep others same to compare (e.g., hot vs cold water dissolving).'}
+  ];
+  const area = $('#enqCards'); area.innerHTML=''; descriptions.forEach(d=>{ const b = makeFlash(d.text, '', d.id); area.appendChild(b); });
+
+  // Delegated click to toggle selection
+  area.addEventListener('click', e=>{
+    const card = e.target.closest('.flash'); if(!card) return; card.classList.toggle('selected');
+  });
+
+  $('#checkEnq').addEventListener('click', ()=>{
+    const picked = Array.from($('#enqCards').querySelectorAll('.selected')).map(n=>n.dataset.key).sort(); const correct = ['classify','fair','observing','pattern','research'].sort(); const ok = JSON.stringify(picked)===JSON.stringify(correct);
+    $('#enqFB').innerHTML = ok?'<span class="result correct">All five matched correctly.</span>':'<span class="result wrong">Some are missing or incorrect. Make sure you selected all five.</span>';
+  });
+}
+
+function renderIce(){
+  content.innerHTML = `
+  <div class="row">
+    <div class="col card">
+      <h3>Ice Cube Watch (Simulated)</h3>
+      <p class="small">Start the timer. Record the state of the ice cube every minute (simulated). Use real ice outdoors if possible.</p>
+      <div style="margin-top:8px">Duration minutes: <input id="iceMins" value="5" style="width:60px"> <button id="startIce" class="btn">Start Simulation</button> <button id="stopIce" class="ghost">Stop</button></div>
+      <div style="margin-top:12px" id="iceLog"></div>
+    </div>
+    <div class="col card">
+      <h4 class="small">Record sheet</h4>
+      <textarea id="iceNotes" rows="8" placeholder="Draw or write observations here..."></textarea>
+      <div style="margin-top:8px"><button id="saveIce" class="btn">Save Note</button> <span id="iceFB"></span></div>
+      <div id="savedIce" style="margin-top:8px"></div>
+    </div>
+  </div>`;
+
+  let timer=null; let t=0; const log = $('#iceLog'); const minsInput = $('#iceMins');
+  function step(){ t++; const perc = Math.min(100, Math.round((t/Number(minsInput.value))*100)); log.innerHTML += `<div class="small">Minute ${t}: Ice looks ${perc<30? 'solid':'partial melt'} (${perc}% melt)</div>`; if(t>=Number(minsInput.value)){ clearInterval(timer); timer=null; log.innerHTML += `<div class="result correct">Simulation complete.</div>`; } }
+  $('#startIce').addEventListener('click', ()=>{ if(timer) return; t=0; log.innerHTML = ''; timer = setInterval(step, 800); });
+  $('#stopIce').addEventListener('click', ()=>{ if(timer){ clearInterval(timer); timer=null; $('#iceLog').innerHTML += '<div class="result wrong">Stopped early.</div>'; } });
+  $('#saveIce').addEventListener('click', ()=>{ const note = $('#iceNotes').value.trim(); if(!note){ $('#iceFB').textContent='Write a note first'; return; } const el = document.createElement('div'); el.className='card'; el.textContent = note; $('#savedIce').appendChild(el); $('#iceFB').innerHTML = '<span class="result correct">Note saved.</span>'; $('#iceNotes').value=''; });
+}
+
+function renderOdd(){
+  content.innerHTML = `
+  <div class="row">
+    <div class="col card">
+      <h3>Odd One Out</h3>
+      <p class="small">Click the odd one out in each set and explain why.</p>
+      <div style="margin-top:8px" id="oddSets"></div>
+      <div style="margin-top:12px"><button id="checkOdd" class="btn">Check Answers</button> <span id="oddFB" style="margin-left:8px"></span></div>
+    </div>
+    <div class="col card">
+      <h4 class="small">Examples</h4>
+      <ul class="small">
+        <li>Candle, Torch, Sun — odd one out: Sun (not man-made)</li>
+        <li>Sand, Salt, Sugar — odd one out: Sand (not soluble)</li>
+      </ul>
+    </div>
+  </div>`;
+
+  const sets = [
+    {items:['Candle','Torch','Sun'],odd:2},
+    {items:['Sand','Salt','Sugar'],odd:0},
+    {items:['Fish','Frog','Flower'],odd:2}
+  ];
+  const area = $('#oddSets'); area.innerHTML=''; sets.forEach((s,i)=>{ const div=document.createElement('div'); div.className='card'; div.style.marginTop='8px'; div.innerHTML = `<div class="small">Set ${i+1}</div>`; const list=document.createElement('div'); list.className='list'; s.items.forEach((it,idx)=>{ const b = makeFlash(it,''); b.dataset.idx=idx; list.appendChild(b); }); div.appendChild(list); area.appendChild(div); });
+
+  // Delegated selection
+  area.addEventListener('click', e=>{ const card = e.target.closest('.flash'); if(!card) return; // only allow one selected per set
+    const parentList = card.parentElement; Array.from(parentList.children).forEach(c=>c.classList.remove('selected')); card.classList.add('selected'); });
+
+  $('#checkOdd').addEventListener('click', ()=>{ let correct=0; const setsDivs = Array.from(area.children); setsDivs.forEach((div,i)=>{ const selected = div.querySelector('.selected'); if(selected && Number(selected.dataset.idx)===sets[i].odd) correct++; }); $('#oddFB').innerHTML = (correct===sets.length)?'<span class="result correct">All correct</span>':`<span class="result wrong">${correct} of ${sets.length} correct</span>`; });
+}
+
+function renderPattern(){
+  content.innerHTML = `
+  <div class="row">
+    <div class="col card">
+      <h3>Pattern Seeking — Shoe Size Survey (simple)</h3>
+      <p class="small">Enter classmates' heights and shoe sizes to look for trends.</p>
+      <div style="margin-top:8px">Name: <input id="psName" placeholder="Name"> Height (cm): <input id="psHeight" style="width:80px" placeholder="e.g.,130"> Shoe size: <input id="psShoe" style="width:80px" placeholder="e.g.,3"> <button id="psAdd" class="btn">Add</button></div>
+      <div id="psList" style="margin-top:12px"></div>
+      <div style="margin-top:8px"><button id="psAnalyze" class="btn ghost">Analyze Trend</button> <span id="psFB" style="margin-left:8px"></span></div>
+    </div>
+
+    <div class="col card">
+      <h4 class="small">Guidance</h4>
+      <p class="small">Collect data in a table, then ask: Do taller students have bigger shoe sizes? Look for patterns.</p>
+      <div id="psSummary" style="margin-top:8px"></div>
+    </div>
+  </div>`;
+
+  const list = $('#psList'); const data=[];
+  $('#psAdd').addEventListener('click', ()=>{ const name=$('#psName').value.trim(); const h=Number($('#psHeight').value); const s=Number($('#psShoe').value); if(!name||isNaN(h)||isNaN(s)){ $('#psFB').innerHTML = '<span class="result wrong">Enter valid data</span>'; return; } data.push({name,height:h,shoe:s}); const row=document.createElement('div'); row.className='small'; row.textContent = `${name} — height: ${h} cm, shoe: ${s}`; list.appendChild(row); $('#psName').value=''; $('#psHeight').value=''; $('#psShoe').value=''; $('#psFB').innerHTML = '<span class="result correct">Added</span>'; });
+  $('#psAnalyze').addEventListener('click', ()=>{ if(data.length<2){ $('#psSummary').innerHTML = '<div class="small">Collect more data (at least 2).</div>'; return; } const sorted = data.slice().sort((a,b)=>a.height-b.height); const half=Math.floor(sorted.length/2); const low = sorted.slice(0,half); const high = sorted.slice(half); const avgLow = low.reduce((s,it)=>s+it.shoe,0)/(low.length||1); const avgHigh = high.reduce((s,it)=>s+it.shoe,0)/(high.length||1); $('#psSummary').innerHTML = `<div class="small">Average shoe (shorter half): ${avgLow.toFixed(2)} — (taller half): ${avgHigh.toFixed(2)}. ${avgHigh>avgLow? 'Taller students tend to have bigger shoes.' : 'No clear trend.'}</div>`; });
+}
+
+function renderFair(){
+  content.innerHTML = `
+  <div class="row">
+    <div class="col card">
+      <h3>Fair Testing — Dissolving Test (Plan)</h3>
+      <p class="small">Plan a fair test: Which dissolves faster — sugar in hot or cold water?</p>
+      <ol class="small">
+        <li>Write a prediction.</li>
+        <li>Identify variable to change (temperature) and variables to keep the same (amount of sugar, water volume, stirring).</li>
+        <li>Record time taken to dissolve.</li>
+      </ol>
+      <div style="margin-top:8px">Prediction: <input id="pred" placeholder="Type your prediction"></div>
+      <div style="margin-top:8px"><button id="savePlan" class="btn">Save Plan</button> <span id="planFB" style="margin-left:8px"></span></div>
+    </div>
+    <div class="col card">
+      <h4 class="small">Recording</h4>
+      <p class="small">Use a stopwatch and record minutes taken in each condition.</p>
+      <div style="margin-top:8px">Hot water time (s): <input id="hotTime" style="width:80px"> Cold water time (s): <input id="coldTime" style="width:80px"> <button id="saveTime" class="btn">Save</button></div>
+      <div id="timeFB" style="margin-top:8px"></div>
+    </div>
+  </div>`;
+
+  $('#savePlan').addEventListener('click', ()=>{ const p=$('#pred').value.trim(); if(!p){ $('#planFB').innerHTML = '<span class="result wrong">Write a prediction</span>'; return; } $('#planFB').innerHTML = '<span class="result correct">Plan saved.</span>'; });
+  $('#saveTime').addEventListener('click', ()=>{ const h=Number($('#hotTime').value); const c=Number($('#coldTime').value); if(isNaN(h)||isNaN(c)){ $('#timeFB').innerHTML = '<span class="result wrong">Enter valid times</span>'; return; } let conclusion = h<c? 'Hot water dissolved faster.':'Cold water dissolved faster or same.'; $('#timeFB').innerHTML = `<span class="result correct">Saved. Conclusion: ${conclusion}</span>`; });
+}
+
+function renderLab(){
+  content.innerHTML = `
+  <div class="row">
+    <div class="col card">
+      <h3>Lab Treasure Hunt — Flashcards</h3>
+      <p class="small">Click a flashcard to flip it and learn the tool. Drag the matching tool name into the description box.</p>
+      <div style="margin-top:8px" id="flashArea" class="list" aria-label="flashcards"></div>
+    </div>
+    <div class="col card">
+      <h4 class="small">Match tools to descriptions</h4>
+      <div class="dropzone" id="matchZone">Drop tool names here</div>
+      <div style="margin-top:8px"><button id="checkMatch" class="btn">Check Matches</button> <span id="matchFB" style="margin-left:8px"></span></div>
+      <div style="margin-top:12px" class="small">Tools: Beaker, Test Tube, Measuring Cylinder, Thermometer, Dropper, Funnel, Microscope, Magnifying Glass, Safety Goggles, Lab Coat, Fire Extinguisher, First Aid Kit</div>
+    </div>
+  </div>`;
+
+  const tools = [
+    {key:'Beaker',front:'🥛 Beaker',back:'Used to hold, stir, or heat liquids.'},
+    {key:'Test Tube',front:'🔬 Test Tube',back:'Used to hold small amounts of substances for experiments.'},
+    {key:'Measuring Cylinder',front:'📏 Measuring Cylinder',back:'Used to measure liquids accurately.'},
+    {key:'Thermometer',front:'🌡️ Thermometer',back:'Used to measure temperature.'},
+    {key:'Dropper',front:'💧 Dropper',back:'Used to transfer small amounts of liquid.'},
+    {key:'Funnel',front:'🔽 Funnel',back:'Helps pour liquids without spilling.'},
+    {key:'Microscope',front:'🔎 Microscope',back:'Used to see tiny objects.'},
+    {key:'Magnifying Glass',front:'🔍 Magnifying Glass',back:'Makes objects look bigger.'},
+    {key:'Safety Goggles',front:'🥽 Safety Goggles',back:'Protect your eyes.'},
+    {key:'Lab Coat',front:'🧥 Lab Coat',back:'Protects clothes and skin.'},
+    {key:'Fire Extinguisher',front:'🔥 Fire Extinguisher',back:'Used to put out small fires.'},
+    {key:'First Aid Kit',front:'🚑 First Aid Kit',back:'Used to treat minor injuries.'}
+  ];
+
+  const area = $('#flashArea'); area.innerHTML=''; tools.forEach(t=>{ const c = makeFlash(`<strong>${t.front}</strong>`, t.back, t.key); c.draggable=true; area.appendChild(c); });
+
+  // Delegated click to flip cards
+  area.addEventListener('click', e=>{ const card = e.target.closest('.flash'); if(!card) return; card.classList.toggle('flipped'); });
+
+  const zone = $('#matchZone'); zone.addEventListener('dragover', e=>e.preventDefault()); zone.addEventListener('drop', e=>{ e.preventDefault(); const key = e.dataTransfer.getData('text/plain'); const item = document.createElement('div'); item.className='badge'; item.textContent = key; zone.appendChild(item); });
+
+  // dragstart for tools
+  area.addEventListener('dragstart', e=>{ const card = e.target.closest('.flash'); if(!card) return; e.dataTransfer.setData('text/plain', card.dataset.key); });
+
+  $('#checkMatch').addEventListener('click', ()=>{ const placed = Array.from($('#matchZone').children).map(x=>x.textContent); const missing = tools.map(t=>t.key).filter(k=>!placed.includes(k)); if(placed.length===tools.length) $('#matchFB').innerHTML = '<span class="result correct">All tools placed. Good job!</span>'; else $('#matchFB').innerHTML = `<span class="result wrong">Placed ${placed.length} of ${tools.length}. Missing: ${missing.join(', ')}</span>`; });
+}
+
+// Tab navigation
+$$('.tab').forEach(t=>t.addEventListener('click', ()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); state.tab = t.dataset.tab; render(); }));
+$('#resetAll').addEventListener('click', ()=> location.reload());
+
+function render(){ if(state.tab==='lineup') renderLineup(); if(state.tab==='enquiry') renderEnquiry(); if(state.tab==='ice') renderIce(); if(state.tab==='odd') renderOdd(); if(state.tab==='pattern') renderPattern(); if(state.tab==='fair') renderFair(); if(state.tab==='lab') renderLab(); }
+
+// initial render
+render();
+</script>
+</body>
+</html>
