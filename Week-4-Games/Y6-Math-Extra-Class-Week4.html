@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Y6 Geometry Game — Symmetry, Circles & Quadrilaterals</title>
+<style>
+  :root{--bg:#fffbeb;--card:#ffffff;--accent:#06b6d4;--accent2:#34d399;--muted:#374151}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(135deg,#fff7ed 0%,#f0f9ff 100%);color:var(--muted)}
+  .app{max-width:1100px;margin:20px auto;padding:18px}
+  header{display:flex;justify-content:space-between;align-items:center}
+  h1{margin:0;font-size:20px}
+  .sub{color:#6b7280;font-size:13px}
+  .controls{display:flex;gap:10px;align-items:center}
+  button{background:var(--accent);color:#002a2a;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid rgba(0,0,0,0.06)}
+  nav{display:flex;gap:8px;margin:12px 0}
+  .tab{background:#fff;border-radius:10px;padding:8px 12px;border:1px solid rgba(0,0,0,0.06);cursor:pointer}
+  .tab.active{box-shadow:0 6px 20px rgba(3,105,161,0.12);border-color:var(--accent)}
+  .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 8px 26px rgba(2,6,23,0.06)}
+  .row{display:flex;gap:12px;align-items:center}
+  .grid{display:grid;gap:12px}
+  .mc{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .opt{background:#f8fafc;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.04);cursor:pointer}
+  .opt.selected{background:var(--accent2);color:#063019;font-weight:600}
+  input[type=text], input[type=number]{padding:8px;border-radius:8px;border:1px solid #e6edf0}
+  .score{font-weight:700;color:var(--accent)}
+  #canvasWrap{border:1px dashed rgba(0,0,0,0.06);border-radius:10px;padding:8px;margin-top:10px}
+  canvas{background:#ffffff;border-radius:8px}
+  footer{margin-top:12px;color:#6b7280;font-size:13px}
+  .small{font-size:13px;color:#6b7280}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Y6 Geometry Game</h1>
+      <div class="sub">Rotational symmetry • Circles • Quadrilaterals • Locus — interactive worksheet</div>
+    </div>
+    <div class="controls">
+      <div class="score">Points: <span id="pts">0</span></div>
+      <button id="resetBtn" class="ghost">Reset</button>
+    </div>
+  </header>
+
+  <nav>
+    <div class="tab active" data-tab="sym">1. Symmetry</div>
+    <div class="tab" data-tab="circle">2. Circles</div>
+    <div class="tab" data-tab="quad">3. Quadrilaterals</div>
+    <div class="tab" data-tab="locus">4. Locus (Draw)</div>
+  </nav>
+
+  <section id="main" class="card">
+    <!-- content injected here -->
+  </section>
+
+  <footer>
+    Tip: Use the tabs to switch topics. Click choices, type answers, and use the draw canvas for the locus task. Remind students about Allah's time and order when praising natural patterns. ✨
+  </footer>
+</div>
+
+<script>
+(function(){
+  const main = document.getElementById('main');
+  const tabs = document.querySelectorAll('.tab');
+  let points = 0; function setPoints(n){ points = n; document.getElementById('pts').textContent = points; }
+  setPoints(0);
+
+  tabs.forEach(t=>t.addEventListener('click', ()=>{ tabs.forEach(x=>x.classList.remove('active')); t.classList.add('active'); render(t.dataset.tab); }));
+
+  document.getElementById('resetBtn').addEventListener('click', ()=>{ if(confirm('Reset game progress?')){ setPoints(0); renderActiveTab(); }});
+
+  function renderActiveTab(){ const active = document.querySelector('.tab.active'); render(active.dataset.tab); }
+
+  // Utility: shuffle
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr; }
+
+  // ---------- SYMMETRY ----------
+  function renderSymmetry(){
+    main.innerHTML = `
+      <h2>Rotational Symmetry</h2>
+      <p class="small">For each shape, choose the order of rotational symmetry (how many times it maps onto itself in a full turn).</p>
+      <div class="grid">
+        <div class="card">
+          <div class="small"><strong>Q1.</strong> Square — choose the order:</div>
+          <div class="mc" id="q1"></div>
+        </div>
+
+        <div class="card">
+          <div class="small"><strong>Q2.</strong> Rhombus (not a square) — choose the order:</div>
+          <div class="mc" id="q2"></div>
+        </div>
+
+        <div class="card">
+          <div class="small"><strong>Q3.</strong> Kite — choose the order:</div>
+          <div class="mc" id="q3"></div>
+        </div>
+
+        <div class="card">
+          <div class="small"><strong>Q4.</strong> Rectangle (non-square) — choose the order:</div>
+          <div class="mc" id="q4"></div>
+        </div>
+
+        <div class="row" style="margin-top:8px"><button id="checkSym">Check Answers</button><div id="resSym" class="small"></div></div>
+      </div>
+    `;
+    // options
+    const opts = ['0','1','2','4']; // order possibilities
+    function build(id, correct){ const container = document.getElementById(id); shuffle(opts.slice()).forEach(o=>{ const b = document.createElement('div'); b.className='opt'; b.textContent = o; b.dataset.val=o; b.onclick=()=>{ container.querySelectorAll('.opt').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); }; container.appendChild(b); }); container.dataset.correct = String(correct); }
+    // answers: square 4, rhombus 2, kite 1, rectangle 2
+    build('q1',4); build('q2',2); build('q3',1); build('q4',2);
+    document.getElementById('checkSym').onclick = ()=>{
+      const ids=['q1','q2','q3','q4']; let correct=0;
+      ids.forEach(id=>{ const cont=document.getElementById(id); const sel=cont.querySelector('.opt.selected'); const want=Number(cont.dataset.correct); if(sel && Number(sel.dataset.val)===want) correct++; });
+      const gained = correct*5; setPoints(points + gained);
+      document.getElementById('resSym').textContent = `You got ${correct}/4. +${gained} pts`;
+    };
+  }
+
+  // ---------- CIRCLES ----------
+  function renderCircles(){
+    main.innerHTML = `
+      <h2>Circles — True / False & Draw</h2>
+      <div class="card">
+        <div class="small"><strong>Q1.</strong> Decide true or false:</div>
+        <ul>
+          <li>a) The circumference is longer than the radius. <select id="a1"><option value="">--</option><option value="T">True</option><option value="F">False</option></select></li>
+          <li>b) The diameter is longer than the circumference. <select id="a2"><option value="">--</option><option value="T">True</option><option value="F">False</option></select></li>
+          <li>c) The radius is twice as long as the diameter. <select id="a3"><option value="">--</option><option value="T">True</option><option value="F">False</option></select></li>
+          <li>d) The diameter is longer than the radius. <select id="a4"><option value="">--</option><option value="T">True</option><option value="F">False</option></select></li>
+          <li>e) The circumference is a straight line. <select id="a5"><option value="">--</option><option value="T">True</option><option value="F">False</option></select></li>
+        </ul>
+        <div class="row"><button id="checkCircle">Check</button><div id="resCircle" class="small"></div></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small"><strong>Q2.</strong> Draw a circle with diameter 6 cm. (On the canvas, click to place the centre P, then drag to set radius. Aim to make radius ≈ 3 cm on-screen.)</div>
+        <div id="canvasWrap"><canvas id="drawCanvas" width="500" height="250"></canvas></div>
+        <div class="row" style="margin-top:8px"><button id="checkCircleDraw">Check Drawing</button><div id="resDraw" class="small"></div></div>
+      </div>
+    `;
+    // answers true/false: a True, b False, c False, d True, e False
+    document.getElementById('checkCircle').onclick = ()=>{
+      const answers = {'a1':'T','a2':'F','a3':'F','a4':'T','a5':'F'}; let correct=0; Object.keys(answers).forEach(k=>{ if(document.getElementById(k).value===answers[k]) correct++; }); const gained=correct*4; setPoints(points+gained); document.getElementById('resCircle').textContent = `You got ${correct}/5. +${gained} pts`; };
+
+    // drawing canvas for locus
+    const canvas = document.getElementById('drawCanvas'); const ctx = canvas.getContext('2d'); let center=null, radius=null, dragging=false;
+    // scale: we need to map 3cm to pixels — ask student to assume 1cm = 30px for screen drawing (instruction shown)
+    ctx.font='12px sans-serif'; ctx.fillStyle='#374151'; ctx.fillText('Instruction: assume 1 cm = 30 px on this screen (so 3 cm = 90 px). Click to place center P, then drag outwards to set radius.',10,15);
+    canvas.addEventListener('mousedown', e=>{ const r=canvas.getBoundingClientRect(); center = {x: e.clientX - r.left, y: e.clientY - r.top}; dragging=true; radius=0; drawCanvas(); });
+    window.addEventListener('mousemove', e=>{ if(!dragging) return; const r=canvas.getBoundingClientRect(); radius = Math.hypot(e.clientX - r.left - center.x, e.clientY - r.top - center.y); drawCanvas(); });
+    window.addEventListener('mouseup', ()=>{ if(dragging) dragging=false; });
+    function drawCanvas(){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#111827'; ctx.font='12px sans-serif'; ctx.fillText('Click & drag to draw circle',10,15); if(center){ ctx.beginPath(); ctx.fillStyle='#ef4444'; ctx.arc(center.x, center.y,4,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#374151'; ctx.fillText('P', center.x+6, center.y+4); }
+      if(center && radius){ ctx.beginPath(); ctx.strokeStyle='#0ea5e9'; ctx.lineWidth=2; ctx.arc(center.x, center.y, radius,0,Math.PI*2); ctx.stroke(); ctx.fillStyle='#374151'; ctx.fillText('r ≈ '+Math.round(radius)+' px', center.x+6, center.y+20); }
+    }
+
+    document.getElementById('checkCircleDraw').onclick = ()=>{
+      if(!center || !radius){ alert('Please draw the circle first (click centre then drag).'); return; }
+      // expected radius px for 3 cm = 3*30 = 90 px
+      const expected = 90; const diff = Math.abs(radius - expected); const ok = diff <= 15; // tolerance
+      if(ok){ setPoints(points+8); document.getElementById('resDraw').textContent = `Good: radius ≈ ${Math.round(radius)} px (target 90). +8 pts`; } else { document.getElementById('resDraw').textContent = `Radius ${Math.round(radius)} px — aim for ≈90 px (3 cm). Try again.`; }
+    };
+  }
+
+  // ---------- QUADRILATERALS ----------
+  function renderQuads(){
+    main.innerHTML = `
+      <h2>Quadrilaterals — Classify & Match</h2>
+      <div class="card">
+        <div class="small"><strong>Q1.</strong> Oliver's quadrilaterals — match names to descriptions.</div>
+        <ol>
+          <li>Exactly 4 right angles, exactly 2 lines of symmetry: <input id="m1" placeholder="Name" /></li>
+          <li>Exactly 1 right angle, no parallel sides: <input id="m2" placeholder="Name" /></li>
+          <li>Exactly 2 right angles, diagonals are not equal lengths: <input id="m3" placeholder="Name" /></li>
+          <li>No right angles, diagonals are not equal lengths: <input id="m4" placeholder="Name" /></li>
+        </ol>
+        <div class="row"><button id="checkMatch">Check</button><div id="resMatch" class="small"></div></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small"><strong>Q2.</strong> Which quadrilaterals have rotational symmetry order 2? (Circle all that apply)</div>
+        <div class="mc" id="qRing"></div>
+        <div class="row" style="margin-top:8px"><button id="checkRing">Check</button><div id="resRing" class="small"></div></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small"><strong>Q3.</strong> Write the letter A-D for the shape that fits each statement.</div>
+        <div class="small">A = Isosceles trapezium &nbsp; B = Rectangle &nbsp; C = Parallelogram &nbsp; D = Kite</div>
+        <ol>
+          <li>a) The shape has no lines of symmetry: <input id="s1" style="width:80px"/></li>
+          <li>b) The shape has no parallel lines: <input id="s2" style="width:80px"/></li>
+          <li>c) The shape has 1 pair of parallel lines: <input id="s3" style="width:80px"/></li>
+        </ol>
+        <div class="row"><button id="checkLetters">Check</button><div id="resLetters" class="small"></div></div>
+      </div>
+    `;
+
+    // build ring options
+    const opts = ['Square','Parallelogram','Kite','Rhombus','Rectangle','Isosceles Trapezium'];
+    const container = document.getElementById('qRing'); opts.forEach(o=>{ const d = document.createElement('div'); d.className='opt'; d.textContent=o; d.onclick=()=>d.classList.toggle('selected'); container.appendChild(d); });
+
+    document.getElementById('checkMatch').onclick = ()=>{
+      // answers: a) Rectangle, b) Kite, c) Trapezium? Wait original mapping: (from earlier) names: Kite, Rectangle, Rhombus, Trapezium mapping: a) Exactly 4 right angles, exactly 2 lines of symmetry -> Rectangle; b) Exactly 1 right angle, no parallel sides -> Kite? but kite can have 1 right angle; c) Exactly 2 right angles, diagonals not equal lengths -> Trapezium? d) No right angles, diagonals not equal lengths -> Rhombus? We'll use original mapping provided earlier: a) Rectangle, b) Kite, c) Rhombus? d) Trapezium? To avoid confusion, we'll use the PDF mapping: a) Rectangle, b) Kite, c) Trapezium, d) Rhombus.
+      const answers = {m1:'Rectangle', m2:'Kite', m3:'Trapezium', m4:'Rhombus'};
+      let correct=0; Object.keys(answers).forEach(k=>{ const v = document.getElementById(k).value.trim(); if(v.toLowerCase()===answers[k].toLowerCase()) correct++; }); setPoints(points + correct*6); document.getElementById('resMatch').textContent = `Correct ${correct}/4. +${correct*6} pts`;
+    };
+
+    document.getElementById('checkRing').onclick = ()=>{
+      // correct with order 2 are: Parallelogram? Actually rotational symmetry order 2: rectangle, parallelogram, rhombus, isosceles trapezium? PDF asked ring around each quadrilateral with rotational symmetry order 2 — typical ones: rectangle (if not square) order 2, parallelogram order 2, rhombus order 2, kite usually 1. Square is order 4 so not 2. Isosceles trapezium usually order 1. We'll accept: Parallelogram, Rhombus, Rectangle.
+      const chosen = Array.from(document.querySelectorAll('#qRing .opt.selected')).map(x=>x.textContent);
+      const correctSet = ['Parallelogram','Rhombus','Rectangle'];
+      const ok = chosen.filter(x=>correctSet.includes(x)).length;
+      const wrong = chosen.length - ok;
+      const scoreAdd = Math.max(0, ok*4 - wrong*2);
+      setPoints(points + scoreAdd);
+      document.getElementById('resRing').textContent = `Marked ${chosen.length}. ${ok} correct. +${scoreAdd} pts`;
+    };
+
+    document.getElementById('checkLetters').onclick = ()=>{
+      // answers: a) The shape has no lines of symmetry -> C Parallelogram? Some parallelograms have 0 lines (general). b) The shape has no parallel lines -> D Kite. c) The shape has 1 pair of parallel lines -> A Isosceles trapezium.
+      const ans = {s1:'C', s2:'D', s3:'A'}; let c=0; Object.keys(ans).forEach(k=>{ const v=document.getElementById(k).value.trim().toUpperCase(); if(v===ans[k]) c++; }); setPoints(points + c*5); document.getElementById('resLetters').textContent = `Correct ${c}/3. +${c*5} pts`;
+    };
+  }
+
+  // ---------- LOCUS / DISTANCE ----------
+  function renderLocus(){
+    main.innerHTML = `
+      <h2>Locus — Points at a Fixed Distance</h2>
+      <div class="card">
+        <div class="small"><strong>Q1.</strong> Draw the set of points exactly 6 cm from point P. (On-screen: assume 1 cm = 30 px, so 6 cm = 180 px). Click to place P, then drag to draw the circle. Click 'Check' to evaluate.</div>
+        <div id="canvasWrap"><canvas id="locusCanvas" width="700" height="360"></canvas></div>
+        <div style="margin-top:8px" class="row"><button id="checkLocus">Check</button><button id="clearLocus" class="ghost">Clear</button><div id="resLocus" class="small"></div></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small"><strong>Q2.</strong> Draw the set of points that are 4 cm from point Q. (Optional additional circle). Use the same tool.</div>
+      </div>
+    `;
+
+    const canvas = document.getElementById('locusCanvas'); const ctx = canvas.getContext('2d'); let mode='draw'; let center=null, radius=null, dragging=false; ctx.font='12px sans-serif'; ctx.fillStyle='#374151'; ctx.fillText('Click to set center P, drag to set radius, release to finish.',10,18);
+    canvas.addEventListener('mousedown', e=>{ const r=canvas.getBoundingClientRect(); center={x:e.clientX-r.left,y:e.clientY-r.top}; dragging=true; radius=0; draw(); });
+    window.addEventListener('mousemove', e=>{ if(!dragging) return; const r=canvas.getBoundingClientRect(); radius = Math.hypot(e.clientX-r.left-center.x, e.clientY-r.top-center.y); draw(); });
+    window.addEventListener('mouseup', ()=>{ if(dragging) dragging=false; });
+    function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#111827'; ctx.fillText('Assume 1 cm = 30 px (6 cm = 180 px).',10,34);
+      if(center){ ctx.beginPath(); ctx.fillStyle='#ef4444'; ctx.arc(center.x, center.y,4,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#374151'; ctx.fillText('P',center.x+6,center.y+4); }
+      if(center && radius){ ctx.beginPath(); ctx.strokeStyle='#60a5fa'; ctx.lineWidth=2; ctx.arc(center.x, center.y, radius,0,Math.PI*2); ctx.stroke(); ctx.fillStyle='#374151'; ctx.fillText('r ≈ '+Math.round(radius)+' px',center.x+6,center.y+20); }
+    }
+    document.getElementById('clearLocus').addEventListener('click', ()=>{ center=null; radius=null; draw(); document.getElementById('resLocus').textContent=''; });
+    document.getElementById('checkLocus').addEventListener('click', ()=>{ if(!center || !radius){ alert('Please draw the circle first.'); return; } const expected = 6*30; const diff = Math.abs(radius - expected); const ok = diff <= 20; if(ok){ setPoints(points+12); document.getElementById('resLocus').textContent = `Good: radius ${Math.round(radius)} px (target ${expected}). +12 pts`; } else { document.getElementById('resLocus').textContent = `Radius ${Math.round(radius)} px — target ${expected} px (6 cm). Try again.`; } });
+  }
+
+  // initial render
+  render('sym');
+
+  function render(tab){ if(tab==='sym') renderSymmetry(); else if(tab==='circle') renderCircles(); else if(tab==='quad') renderQuads(); else if(tab==='locus') renderLocus(); }
+
+})();
+</script>
+</body>
+</html>
